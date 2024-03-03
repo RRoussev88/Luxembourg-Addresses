@@ -1,5 +1,5 @@
 {
-  "id": "09ffcba2-3f7c-41d6-9df2-e5b24c3f43fe",
+  "id": "ee45dcbe-dad8-4dc0-b946-209c565c24e9",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "5",
   "dialect": "pg",
@@ -28,7 +28,7 @@
         },
         "rue": {
           "name": "rue",
-          "type": "varchar(100)",
+          "type": "varchar(50)",
           "primaryKey": false,
           "notNull": false
         },
@@ -40,7 +40,7 @@
         },
         "localite": {
           "name": "localite",
-          "type": "varchar(50)",
+          "type": "varchar(30)",
           "primaryKey": false,
           "notNull": false
         },
@@ -64,13 +64,13 @@
         },
         "id_geoportail": {
           "name": "id_geoportail",
-          "type": "varchar(100)",
+          "type": "varchar(50)",
           "primaryKey": false,
           "notNull": false
         },
         "commune": {
           "name": "commune",
-          "type": "varchar(50)",
+          "type": "varchar(30)",
           "primaryKey": false,
           "notNull": false
         },
@@ -79,6 +79,13 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {},
@@ -98,7 +105,7 @@
         },
         "line": {
           "name": "line",
-          "type": "varchar(100)",
+          "type": "varchar(10)",
           "primaryKey": false,
           "notNull": false
         },
@@ -108,9 +115,9 @@
           "primaryKey": false,
           "notNull": false
         },
-        "id_geoportail": {
-          "name": "id_geoportail",
-          "type": "varchar(100)",
+        "id_geoportal": {
+          "name": "id_geoportal",
+          "type": "varchar(50)",
           "primaryKey": false,
           "notNull": false
         },
@@ -137,6 +144,13 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {
@@ -179,8 +193,8 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "luxembourg_communes": {
-      "name": "luxembourg_communes",
+    "luxembourg_localities": {
+      "name": "luxembourg_localities",
       "schema": "",
       "columns": {
         "id": {
@@ -191,70 +205,41 @@
         },
         "name": {
           "name": "name",
-          "type": "varchar(100)",
+          "type": "varchar(50)",
           "primaryKey": false,
           "notNull": false
         },
-        "calcr_id": {
-          "name": "calcr_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {
-        "commune_calcr_idx": {
-          "name": "commune_calcr_idx",
-          "columns": [
-            "calcr_id"
-          ],
-          "isUnique": true
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
-    },
-    "luxembourg_localites": {
-      "name": "luxembourg_localites",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "name": {
-          "name": "name",
-          "type": "varchar(100)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "commune_id": {
-          "name": "commune_id",
+        "municipality_id": {
+          "name": "municipality_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {
-        "localite_name_commune_idx": {
-          "name": "localite_name_commune_idx",
+        "locality_name_municipality_idx": {
+          "name": "locality_name_municipality_idx",
           "columns": [
             "name",
-            "commune_id"
+            "municipality_id"
           ],
           "isUnique": true
         }
       },
       "foreignKeys": {
-        "luxembourg_localites_commune_id_luxembourg_communes_id_fk": {
-          "name": "luxembourg_localites_commune_id_luxembourg_communes_id_fk",
-          "tableFrom": "luxembourg_localites",
-          "tableTo": "luxembourg_communes",
+        "luxembourg_localities_municipality_id_luxembourg_municipalities_id_fk": {
+          "name": "luxembourg_localities_municipality_id_luxembourg_municipalities_id_fk",
+          "tableFrom": "luxembourg_localities",
+          "tableTo": "luxembourg_municipalities",
           "columnsFrom": [
-            "commune_id"
+            "municipality_id"
           ],
           "columnsTo": [
             "id"
@@ -263,6 +248,49 @@
           "onUpdate": "no action"
         }
       },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "luxembourg_municipalities": {
+      "name": "luxembourg_municipalities",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "calcr_id": {
+          "name": "calcr_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "municipality_calcr_idx": {
+          "name": "municipality_calcr_idx",
+          "columns": [
+            "calcr_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
@@ -282,11 +310,18 @@
           "primaryKey": false,
           "notNull": false
         },
-        "localite_id": {
-          "name": "localite_id",
+        "locality_id": {
+          "name": "locality_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {
@@ -299,12 +334,12 @@
         }
       },
       "foreignKeys": {
-        "luxembourg_postal_codes_localite_id_luxembourg_localites_id_fk": {
-          "name": "luxembourg_postal_codes_localite_id_luxembourg_localites_id_fk",
+        "luxembourg_postal_codes_locality_id_luxembourg_localities_id_fk": {
+          "name": "luxembourg_postal_codes_locality_id_luxembourg_localities_id_fk",
           "tableFrom": "luxembourg_postal_codes",
-          "tableTo": "luxembourg_localites",
+          "tableTo": "luxembourg_localities",
           "columnsFrom": [
-            "localite_id"
+            "locality_id"
           ],
           "columnsTo": [
             "id"
@@ -328,7 +363,7 @@
         },
         "name": {
           "name": "name",
-          "type": "varchar(100)",
+          "type": "varchar(50)",
           "primaryKey": false,
           "notNull": false
         },
@@ -338,11 +373,18 @@
           "primaryKey": false,
           "notNull": false
         },
-        "localite_id": {
-          "name": "localite_id",
+        "locality_id": {
+          "name": "locality_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {
@@ -355,12 +397,12 @@
         }
       },
       "foreignKeys": {
-        "luxembourg_streets_localite_id_luxembourg_localites_id_fk": {
-          "name": "luxembourg_streets_localite_id_luxembourg_localites_id_fk",
+        "luxembourg_streets_locality_id_luxembourg_localities_id_fk": {
+          "name": "luxembourg_streets_locality_id_luxembourg_localities_id_fk",
           "tableFrom": "luxembourg_streets",
-          "tableTo": "luxembourg_localites",
+          "tableTo": "luxembourg_localities",
           "columnsFrom": [
-            "localite_id"
+            "locality_id"
           ],
           "columnsTo": [
             "id"

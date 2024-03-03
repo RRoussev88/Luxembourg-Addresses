@@ -3,8 +3,8 @@ import { Hono } from "hono";
 
 import { db } from "../database";
 import {
-  luxembourgCommunes,
-  luxembourgLocalites,
+  luxembourgMunicipalities,
+  luxembourgLocalities,
   luxembourgPostalCodes,
 } from "../schema";
 import { getAllItems, getItemById } from "../utils";
@@ -19,27 +19,26 @@ postalCodesRoute.get("/:id", (context) =>
         .select({
           id: luxembourgPostalCodes.id,
           code: luxembourgPostalCodes.code,
-          localityId: luxembourgPostalCodes.localiteId,
+          localityId: luxembourgPostalCodes.localityId,
           locality: {
-            id: luxembourgLocalites.id,
-            name: luxembourgLocalites.name,
-            communeId: luxembourgCommunes.id,
-            commune: {
-              id: luxembourgCommunes.id,
+            id: luxembourgLocalities.id,
+            name: luxembourgLocalities.name,
+            municipality: {
+              id: luxembourgMunicipalities.id,
               // @ts-ignore
-              name: luxembourgCommunes.name,
-              calcrId: luxembourgCommunes.calcrId,
+              name: luxembourgMunicipalities.name,
+              calcrId: luxembourgMunicipalities.calcrId,
             },
           },
         })
         .from(luxembourgPostalCodes)
         .innerJoin(
-          luxembourgLocalites,
-          eq(luxembourgPostalCodes.localiteId, luxembourgLocalites.id)
+          luxembourgLocalities,
+          eq(luxembourgPostalCodes.localityId, luxembourgLocalities.id)
         )
         .innerJoin(
-          luxembourgCommunes,
-          eq(luxembourgLocalites.communeId, luxembourgCommunes.id)
+          luxembourgMunicipalities,
+          eq(luxembourgLocalities.municipalityId, luxembourgMunicipalities.id)
         )
         .where(eq(luxembourgPostalCodes.id, Number(id)))
         .limit(1)
@@ -61,7 +60,7 @@ postalCodesRoute.get("/", (context) => {
 
   if (idQuery?.length) filters.push(inArray(luxembourgPostalCodes.id, idQuery));
   if (localityIdQuery?.length)
-    filters.push(inArray(luxembourgPostalCodes.localiteId, localityIdQuery));
+    filters.push(inArray(luxembourgPostalCodes.localityId, localityIdQuery));
   if (!!codeQuery) filters.push(ilike(luxembourgPostalCodes.code, codeQuery));
   if (!!codeContainsQuery)
     filters.push(ilike(luxembourgPostalCodes.code, `%${codeContainsQuery}%`));

@@ -2,7 +2,7 @@ import { and, eq, ilike, inArray, type SQLWrapper } from "drizzle-orm";
 import { Hono } from "hono";
 
 import { db } from "../database";
-import { luxembourgCommunes } from "../schema";
+import { luxembourgMunicipalities } from "../schema";
 import { getAllItems, getItemById } from "../utils";
 
 export const communesRoute = new Hono();
@@ -12,8 +12,8 @@ communesRoute.get("/:id", (context) =>
     (
       await db
         .select()
-        .from(luxembourgCommunes)
-        .where(eq(luxembourgCommunes.id, Number(id)))
+        .from(luxembourgMunicipalities)
+        .where(eq(luxembourgMunicipalities.id, Number(id)))
         .limit(1)
     ).pop()
   )
@@ -32,12 +32,12 @@ communesRoute.get("/", (context) => {
   const nameContainsQuery = context.req.query("nameContains");
   const filters: SQLWrapper[] = [];
 
-  if (idQuery?.length) filters.push(inArray(luxembourgCommunes.id, idQuery));
+  if (idQuery?.length) filters.push(inArray(luxembourgMunicipalities.id, idQuery));
   if (calcrIdQuery?.length)
-    filters.push(inArray(luxembourgCommunes.calcrId, calcrIdQuery));
-  if (!!nameQuery) filters.push(ilike(luxembourgCommunes.name, nameQuery));
+    filters.push(inArray(luxembourgMunicipalities.calcrId, calcrIdQuery));
+  if (!!nameQuery) filters.push(ilike(luxembourgMunicipalities.name, nameQuery));
   if (!!nameContainsQuery)
-    filters.push(ilike(luxembourgCommunes.name, `%${nameContainsQuery}%`));
+    filters.push(ilike(luxembourgMunicipalities.name, `%${nameContainsQuery}%`));
 
-  return getAllItems(context, luxembourgCommunes, and(...filters));
+  return getAllItems(context, luxembourgMunicipalities, and(...filters));
 });

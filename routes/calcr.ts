@@ -5,8 +5,8 @@ import { db } from "../database";
 import {
   calcrFeature,
   luxembourgAddressLines,
-  luxembourgCommunes,
-  luxembourgLocalites,
+  luxembourgMunicipalities,
+  luxembourgLocalities,
   luxembourgPostalCodes,
   luxembourgStreets,
 } from "../schema";
@@ -58,59 +58,60 @@ const getOrCreateFeature = async (feature: Feature) => {
   console.log("featureRecord: ", featureRecord);
 };
 
-const getOrCreateCommune = async (name: string, calcrId: string) => {
-  const existingCommunes = await db
-    .select({ id: luxembourgCommunes.id })
-    .from(luxembourgCommunes)
-    .where(eq(luxembourgCommunes.calcrId, Number(calcrId)));
+const getOrCreateMunicipality = async (name: string, calcrId: string) => {
+  const existingMunicipalities = await db
+    .select({ id: luxembourgMunicipalities.id })
+    .from(luxembourgMunicipalities)
+    .where(eq(luxembourgMunicipalities.calcrId, Number(calcrId)));
 
-  console.log("existingCommunes: ", existingCommunes);
-  if (existingCommunes.length) return existingCommunes.pop()?.id ?? -1;
+  console.log("existingMunicipalities: ", existingMunicipalities);
+  if (existingMunicipalities.length)
+    return existingMunicipalities.pop()?.id ?? -1;
 
-  const newCommunes = await db
-    .insert(luxembourgCommunes)
+  const newMunicipalities = await db
+    .insert(luxembourgMunicipalities)
     .values({
       name,
       calcrId: Number(calcrId),
     })
     .onConflictDoUpdate({
-      target: luxembourgCommunes.calcrId,
+      target: luxembourgMunicipalities.calcrId,
       set: { name },
     })
-    .returning({ id: luxembourgCommunes.id });
+    .returning({ id: luxembourgMunicipalities.id });
 
-  console.log("newCommunes: ", newCommunes);
-  return newCommunes.pop()?.id ?? -1;
+  console.log("newMunicipalities: ", newMunicipalities);
+  return newMunicipalities.pop()?.id ?? -1;
 };
 
-const getOrCreateLocalite = async (name: string, communeId: number) => {
-  const existingLocalites = await db
-    .select({ id: luxembourgLocalites.id })
-    .from(luxembourgLocalites)
+const getOrCreateLocality = async (name: string, municipalityId: number) => {
+  const existingLocalities = await db
+    .select({ id: luxembourgLocalities.id })
+    .from(luxembourgLocalities)
     .where(
       and(
-        eq(luxembourgLocalites.name, name),
-        eq(luxembourgLocalites.communeId, communeId)
+        eq(luxembourgLocalities.name, name),
+        eq(luxembourgLocalities.municipalityId, municipalityId)
       )
     );
 
-  console.log("existingLocalites: ", existingLocalites);
-  if (existingLocalites.length) return existingLocalites.pop()?.id ?? -1;
+  console.log("existingLocalities: ", existingLocalities);
+  if (existingLocalities.length) return existingLocalities.pop()?.id ?? -1;
 
-  const newLocalites = await db
-    .insert(luxembourgLocalites)
-    .values({ name, communeId })
+  const newLocalities = await db
+    .insert(luxembourgLocalities)
+    .values({ name, municipalityId })
     .onConflictDoUpdate({
-      target: [luxembourgLocalites.name, luxembourgLocalites.communeId],
-      set: { communeId },
+      target: [luxembourgLocalities.name, luxembourgLocalities.municipalityId],
+      set: { municipalityId },
     })
-    .returning({ id: luxembourgLocalites.id });
+    .returning({ id: luxembourgLocalities.id });
 
-  console.log("newLocalites: ", newLocalites);
-  return newLocalites.pop()?.id ?? -1;
+  console.log("newLocalities: ", newLocalities);
+  return newLocalities.pop()?.id ?? -1;
 };
 
-const getOrCreatePostalCode = async (code: string, localiteId: number) => {
+const getOrCreatePostalCode = async (code: string, localityId: number) => {
   const existingPostalCodes = await db
     .select({ id: luxembourgPostalCodes.id })
     .from(luxembourgPostalCodes)
@@ -121,10 +122,10 @@ const getOrCreatePostalCode = async (code: string, localiteId: number) => {
 
   const newPostCodes = await db
     .insert(luxembourgPostalCodes)
-    .values({ code, localiteId })
+    .values({ code, localityId })
     .onConflictDoUpdate({
       target: luxembourgPostalCodes.code,
-      set: { localiteId },
+      set: { localityId },
     })
     .returning({ id: luxembourgPostalCodes.id });
 
@@ -135,7 +136,7 @@ const getOrCreatePostalCode = async (code: string, localiteId: number) => {
 const getOrCreateStreet = async (
   name: string,
   calcrId: string,
-  localiteId: number
+  localityId: number
 ) => {
   const existingStreets = await db
     .select({ id: luxembourgStreets.id })
@@ -150,11 +151,11 @@ const getOrCreateStreet = async (
     .values({
       name,
       calcrId: Number(calcrId),
-      localiteId,
+      localityId,
     })
     .onConflictDoUpdate({
       target: luxembourgStreets.calcrId,
-      set: { name, localiteId },
+      set: { name, localityId },
     })
     .returning({ id: luxembourgStreets.id });
 
@@ -165,7 +166,7 @@ const getOrCreateStreet = async (
 const getOrCreateAddressLine = async (
   line: string,
   calcrId: string,
-  idGeoportail: string,
+  idGeoportal: string,
   latitude: number,
   longitude: number,
   streetId: number,
@@ -184,7 +185,7 @@ const getOrCreateAddressLine = async (
     .values({
       line,
       calcrId: Number(calcrId),
-      idGeoportail,
+      idGeoportal,
       latitude,
       longitude,
       streetId,
@@ -194,7 +195,7 @@ const getOrCreateAddressLine = async (
       target: luxembourgAddressLines.calcrId,
       set: {
         line,
-        idGeoportail,
+        idGeoportal,
         latitude,
         longitude,
         streetId,
@@ -217,25 +218,25 @@ calcrRoute.get("/", async (context) => {
 
     const { geometry, properties } = feature;
 
-    const newCommuneId = await getOrCreateCommune(
+    const newCommuneId = await getOrCreateMunicipality(
       properties.commune,
       properties.lau2
     );
 
-    const newLocaliteId = await getOrCreateLocalite(
+    const newLocalityId = await getOrCreateLocality(
       properties.localite,
       newCommuneId
     );
 
     const newPostCodeId = await getOrCreatePostalCode(
       properties.code_postal,
-      newLocaliteId
+      newLocalityId
     );
 
     const newStreetId = await getOrCreateStreet(
       properties.rue,
       properties.id_caclr_rue,
-      newLocaliteId
+      newLocalityId
     );
 
     await getOrCreateAddressLine(

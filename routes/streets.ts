@@ -3,8 +3,8 @@ import { Hono } from "hono";
 
 import { db } from "../database";
 import {
-  luxembourgCommunes,
-  luxembourgLocalites,
+  luxembourgMunicipalities,
+  luxembourgLocalities,
   luxembourgStreets,
 } from "../schema";
 import { getAllItems, getItemById } from "../utils";
@@ -20,27 +20,26 @@ streetsRoute.get("/:id", (context) =>
           id: luxembourgStreets.id,
           name: luxembourgStreets.name,
           calcrId: luxembourgStreets.calcrId,
-          localityId: luxembourgStreets.localiteId,
+          localityId: luxembourgStreets.localityId,
           locality: {
-            id: luxembourgLocalites.id,
-            name: luxembourgLocalites.name,
-            communeId: luxembourgCommunes.id,
-            commune: {
-              id: luxembourgCommunes.id,
+            id: luxembourgLocalities.id,
+            name: luxembourgLocalities.name,
+            municipality: {
+              id: luxembourgMunicipalities.id,
               // @ts-ignore
-              name: luxembourgCommunes.name,
-              calcrId: luxembourgCommunes.calcrId,
+              name: luxembourgMunicipalities.name,
+              calcrId: luxembourgMunicipalities.calcrId,
             },
           },
         })
         .from(luxembourgStreets)
         .innerJoin(
-          luxembourgLocalites,
-          eq(luxembourgStreets.localiteId, luxembourgLocalites.id)
+          luxembourgLocalities,
+          eq(luxembourgStreets.localityId, luxembourgLocalities.id)
         )
         .innerJoin(
-          luxembourgCommunes,
-          eq(luxembourgLocalites.communeId, luxembourgCommunes.id)
+          luxembourgMunicipalities,
+          eq(luxembourgLocalities.municipalityId, luxembourgMunicipalities.id)
         )
         .where(eq(luxembourgStreets.id, Number(id)))
         .limit(1)
@@ -68,7 +67,7 @@ streetsRoute.get("/", (context) => {
   if (calcrIdQuery?.length)
     filters.push(inArray(luxembourgStreets.calcrId, calcrIdQuery));
   if (localityIdQuery?.length)
-    filters.push(inArray(luxembourgStreets.localiteId, localityIdQuery));
+    filters.push(inArray(luxembourgStreets.localityId, localityIdQuery));
   if (!!nameQuery) filters.push(ilike(luxembourgStreets.name, nameQuery));
   if (!!nameContainsQuery)
     filters.push(ilike(luxembourgStreets.name, `%${nameContainsQuery}%`));

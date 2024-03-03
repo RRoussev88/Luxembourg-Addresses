@@ -3,8 +3,8 @@ import { Hono } from "hono";
 
 import { db } from "../database";
 import {
-  luxembourgCommunes,
-  luxembourgLocalites,
+  luxembourgMunicipalities,
+  luxembourgLocalities,
   luxembourgPostalCodes,
   luxembourgStreets,
   luxembourgAddressLines,
@@ -21,31 +21,28 @@ addressesRoute.get("/:id", (context) =>
         .select({
           id: luxembourgAddressLines.id,
           calcrId: luxembourgAddressLines.calcrId,
-          communeId: luxembourgCommunes.id,
-          idGeoportail: luxembourgAddressLines.idGeoportail,
+          municipalityId: luxembourgMunicipalities.id,
+          idGeoportail: luxembourgAddressLines.idGeoportal,
           line: luxembourgAddressLines.line,
           latitude: luxembourgAddressLines.latitude,
           longitude: luxembourgAddressLines.longitude,
-          localityId: luxembourgLocalites.id,
-          postalCodeId: luxembourgAddressLines.postalCodeId,
           postalCode: {
             id: luxembourgPostalCodes.id,
             code: luxembourgPostalCodes.code,
           },
-          streetId: luxembourgAddressLines.streetId,
           street: {
             id: luxembourgStreets.id,
             name: luxembourgStreets.name,
             calcrId: luxembourgStreets.calcrId,
           },
           locality: {
-            id: luxembourgLocalites.id,
-            name: luxembourgLocalites.name,
-            commune: {
-              id: luxembourgCommunes.id,
+            id: luxembourgLocalities.id,
+            name: luxembourgLocalities.name,
+            municipality: {
+              id: luxembourgMunicipalities.id,
               // @ts-ignore
-              name: luxembourgCommunes.name,
-              calcrId: luxembourgCommunes.calcrId,
+              name: luxembourgMunicipalities.name,
+              calcrId: luxembourgMunicipalities.calcrId,
             },
           },
         })
@@ -59,12 +56,12 @@ addressesRoute.get("/:id", (context) =>
           eq(luxembourgAddressLines.streetId, luxembourgStreets.id)
         )
         .innerJoin(
-          luxembourgLocalites,
-          eq(luxembourgStreets.localiteId, luxembourgLocalites.id)
+          luxembourgLocalities,
+          eq(luxembourgStreets.localityId, luxembourgLocalities.id)
         )
         .innerJoin(
-          luxembourgCommunes,
-          eq(luxembourgLocalites.communeId, luxembourgCommunes.id)
+          luxembourgMunicipalities,
+          eq(luxembourgLocalities.municipalityId, luxembourgMunicipalities.id)
         )
         .where(eq(luxembourgStreets.id, Number(id)))
         .limit(1)
@@ -120,14 +117,14 @@ addressesRoute.get("/", (context) => {
   if (!!lineContainsQuery)
     filters.push(ilike(luxembourgAddressLines.line, `%${lineContainsQuery}%`));
   if (!!idGeoportalQuery)
-    filters.push(ilike(luxembourgAddressLines.idGeoportail, idGeoportalQuery));
+    filters.push(ilike(luxembourgAddressLines.idGeoportal, idGeoportalQuery));
   if (!!idGeoportalContainsQuery)
     filters.push(
       ilike(
-        luxembourgAddressLines.idGeoportail,
+        luxembourgAddressLines.idGeoportal,
         `%${idGeoportalContainsQuery}%`
       )
     );
-  // TODO: Rename 'localite' to 'locality' and 'commune' to 'municipality'
+
   return getAllItems(context, luxembourgAddressLines, and(...filters));
 });
