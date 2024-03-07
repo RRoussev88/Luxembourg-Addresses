@@ -12,9 +12,8 @@ import { getAllItems, getItemById } from "../utils";
 export const streetsRoute = new Hono();
 
 streetsRoute.get("/:id", (context) =>
-  getItemById(
-    context,
-    async (id: number) =>
+  getItemById(context, async (id: number) =>
+    (
       await db
         .select({
           id: luxembourgStreets.id,
@@ -43,6 +42,7 @@ streetsRoute.get("/:id", (context) =>
         )
         .where(eq(luxembourgStreets.id, Number(id)))
         .limit(1)
+    ).pop()
   )
 );
 

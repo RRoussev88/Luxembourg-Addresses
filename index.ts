@@ -4,6 +4,7 @@ import {
   addressesRoute,
   calcrRoute,
   communesRoute,
+  geocodeRoute,
   localitiesRoute,
   postalCodesRoute,
   streetsRoute,
@@ -12,8 +13,9 @@ import {
 const app = new Hono();
 app.route("/addresses_georeferences", calcrRoute);
 app.route("/addresses", addressesRoute);
-app.route("/municipalities", communesRoute);
+app.route("/geocode", geocodeRoute);
 app.route("/localities", localitiesRoute);
+app.route("/municipalities", communesRoute);
 app.route("/postal_codes", postalCodesRoute);
 app.route("/streets", streetsRoute);
 

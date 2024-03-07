@@ -26,9 +26,6 @@ const exampleFeature = {
 
 export type Feature = typeof exampleFeature;
 
-export const GEOREFERENCED_ADDRESSES_URL =
-  "https://data.public.lu/fr/datasets/r/7b58cf20-cbb0-4970-83f7-53a277f691b8";
-
 export const getLimit = (context: Context): number =>
   isNaN(Number(context.req.query("limit")))
     ? 25

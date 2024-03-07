@@ -1,5 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
+import { HTTPException } from "hono/http-exception";
 
 import { db } from "../database";
 import {
@@ -10,7 +11,7 @@ import {
   luxembourgPostalCodes,
   luxembourgStreets,
 } from "../schema";
-import { GEOREFERENCED_ADDRESSES_URL, type Feature } from "../utils";
+import type { Feature } from "../utils";
 
 export const calcrRoute = new Hono();
 
@@ -209,7 +210,12 @@ const getOrCreateAddressLine = async (
 };
 
 calcrRoute.get("/", async (context) => {
-  const response = await fetch(GEOREFERENCED_ADDRESSES_URL);
+  const url = process.env.GEOREFERENCED_ADDRESSES_URL;
+  if (!url) {
+    throw new HTTPException(404, { message: "URL is not set" });
+  }
+
+  const response = await fetch(url);
   const data: { features: Feature[] } = await response.json();
   console.log("DATA: " + data.features.length);
 

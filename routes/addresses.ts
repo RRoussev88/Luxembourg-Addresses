@@ -14,9 +14,8 @@ import { getAllItems, getItemById } from "../utils";
 export const addressesRoute = new Hono();
 
 addressesRoute.get("/:id", (context) =>
-  getItemById(
-    context,
-    async (id: number) =>
+  getItemById(context, async (id: number) =>
+    (
       await db
         .select({
           id: luxembourgAddressLines.id,
@@ -65,6 +64,7 @@ addressesRoute.get("/:id", (context) =>
         )
         .where(eq(luxembourgStreets.id, Number(id)))
         .limit(1)
+    ).pop()
   )
 );
 
@@ -120,10 +120,7 @@ addressesRoute.get("/", (context) => {
     filters.push(ilike(luxembourgAddressLines.idGeoportal, idGeoportalQuery));
   if (!!idGeoportalContainsQuery)
     filters.push(
-      ilike(
-        luxembourgAddressLines.idGeoportal,
-        `%${idGeoportalContainsQuery}%`
-      )
+      ilike(luxembourgAddressLines.idGeoportal, `%${idGeoportalContainsQuery}%`)
     );
 
   return getAllItems(context, luxembourgAddressLines, and(...filters));

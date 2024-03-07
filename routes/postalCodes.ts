@@ -12,9 +12,8 @@ import { getAllItems, getItemById } from "../utils";
 export const postalCodesRoute = new Hono();
 
 postalCodesRoute.get("/:id", (context) =>
-  getItemById(
-    context,
-    async (id: number) =>
+  getItemById(context, async (id: number) =>
+    (
       await db
         .select({
           id: luxembourgPostalCodes.id,
@@ -42,6 +41,7 @@ postalCodesRoute.get("/:id", (context) =>
         )
         .where(eq(luxembourgPostalCodes.id, Number(id)))
         .limit(1)
+    ).pop()
   )
 );
 
