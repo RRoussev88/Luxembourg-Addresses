@@ -77,7 +77,7 @@ const getOrCreateMunicipality = async (name: string, calcrId: string) => {
     })
     .onConflictDoUpdate({
       target: luxembourgMunicipalities.calcrId,
-      set: { name },
+      set: { name, updatedAt: new Date() },
     })
     .returning({ id: luxembourgMunicipalities.id });
 
@@ -104,7 +104,7 @@ const getOrCreateLocality = async (name: string, municipalityId: number) => {
     .values({ name, municipalityId })
     .onConflictDoUpdate({
       target: [luxembourgLocalities.name, luxembourgLocalities.municipalityId],
-      set: { municipalityId },
+      set: { municipalityId, updatedAt: new Date() },
     })
     .returning({ id: luxembourgLocalities.id });
 
@@ -126,7 +126,7 @@ const getOrCreatePostalCode = async (code: string, localityId: number) => {
     .values({ code, localityId })
     .onConflictDoUpdate({
       target: luxembourgPostalCodes.code,
-      set: { localityId },
+      set: { localityId, updatedAt: new Date() },
     })
     .returning({ id: luxembourgPostalCodes.id });
 
@@ -156,7 +156,7 @@ const getOrCreateStreet = async (
     })
     .onConflictDoUpdate({
       target: luxembourgStreets.calcrId,
-      set: { name, localityId },
+      set: { name, localityId, updatedAt: new Date() },
     })
     .returning({ id: luxembourgStreets.id });
 
@@ -201,6 +201,7 @@ const getOrCreateAddressLine = async (
         longitude,
         streetId,
         postalCodeId,
+        updatedAt: new Date(),
       },
     })
     .returning({ id: luxembourgAddressLines.id });

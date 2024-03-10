@@ -23,28 +23,32 @@ CREATE TABLE IF NOT EXISTS "luxembourg_address_lines" (
 	"longitude" double precision,
 	"street_id" integer NOT NULL,
 	"postal_code_id" integer NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "luxembourg_localities" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"name" varchar(50),
 	"municipality_id" integer NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "luxembourg_municipalities" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"name" varchar(50),
 	"calcr_id" integer,
-	"created_at" timestamp DEFAULT now() NOT NULL
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "luxembourg_postal_codes" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"code" varchar(10),
 	"locality_id" integer NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "luxembourg_streets" (
@@ -52,7 +56,8 @@ CREATE TABLE IF NOT EXISTS "luxembourg_streets" (
 	"name" varchar(50),
 	"calcr_id" integer,
 	"locality_id" integer NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX IF NOT EXISTS "address_line_calcr_idx" ON "luxembourg_address_lines" ("calcr_id");--> statement-breakpoint

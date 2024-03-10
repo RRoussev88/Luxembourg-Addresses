@@ -15,6 +15,7 @@ export const luxembourgMunicipalities = pgTable(
     name: varchar("name", { length: 50 }),
     calcrId: integer("calcr_id"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
   (munic) => ({
     calcrIndex: uniqueIndex("municipality_calcr_idx").on(munic.calcrId),
@@ -30,6 +31,7 @@ export const luxembourgLocalities = pgTable(
       .notNull()
       .references(() => luxembourgMunicipalities.id),
     createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
   (locality) => ({
     nameCommuneIndex: uniqueIndex("locality_name_municipality_idx").on(
@@ -48,6 +50,7 @@ export const luxembourgPostalCodes = pgTable(
       .notNull()
       .references(() => luxembourgLocalities.id),
     createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
   (postCode) => ({
     postCodeIndex: uniqueIndex("post_code_idx").on(postCode.code),
@@ -64,6 +67,7 @@ export const luxembourgStreets = pgTable(
       .notNull()
       .references(() => luxembourgLocalities.id),
     createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
   (street) => ({
     calcrIndex: uniqueIndex("street_calcr_idx").on(street.calcrId),
@@ -86,6 +90,7 @@ export const luxembourgAddressLines = pgTable(
       .notNull()
       .references(() => luxembourgPostalCodes.id),
     createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
   (addressLine) => ({
     calcrIndex: uniqueIndex("address_line_calcr_idx").on(addressLine.calcrId),
