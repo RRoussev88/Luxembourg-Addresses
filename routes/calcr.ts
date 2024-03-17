@@ -1,10 +1,11 @@
-import { and, eq } from "drizzle-orm";
+import { and, count, desc, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 
 import { db } from "../database";
 import {
   calcrFeature,
+  localitiesToPostalCodes,
   luxembourgAddressLines,
   luxembourgMunicipalities,
   luxembourgLocalities,
@@ -61,23 +62,38 @@ const getOrCreateFeature = async (feature: Feature) => {
 
 const getOrCreateMunicipality = async (name: string, calcrId: string) => {
   const existingMunicipalities = await db
-    .select({ id: luxembourgMunicipalities.id })
+    .select()
     .from(luxembourgMunicipalities)
     .where(eq(luxembourgMunicipalities.calcrId, Number(calcrId)));
 
   console.log("existingMunicipalities: ", existingMunicipalities);
-  if (existingMunicipalities.length)
-    return existingMunicipalities.pop()?.id ?? -1;
+
+  const newDate = new Date();
+  if (existingMunicipalities.length) {
+    const municipality = existingMunicipalities.pop();
+    const municipalityId = municipality?.id ?? -1;
+
+    if (municipality?.name !== name) {
+      await db
+        .update(luxembourgMunicipalities)
+        .set({ name, updatedAt: newDate, verifiedAt: newDate })
+        .where(eq(luxembourgMunicipalities.id, municipalityId));
+    } else {
+      await db
+        .update(luxembourgMunicipalities)
+        .set({ verifiedAt: newDate })
+        .where(eq(luxembourgMunicipalities.id, municipalityId));
+    }
+
+    return municipalityId;
+  }
 
   const newMunicipalities = await db
     .insert(luxembourgMunicipalities)
-    .values({
-      name,
-      calcrId: Number(calcrId),
-    })
+    .values({ name, calcrId: Number(calcrId) })
     .onConflictDoUpdate({
       target: luxembourgMunicipalities.calcrId,
-      set: { name, updatedAt: new Date() },
+      set: { name, updatedAt: newDate },
     })
     .returning({ id: luxembourgMunicipalities.id });
 
@@ -86,25 +102,28 @@ const getOrCreateMunicipality = async (name: string, calcrId: string) => {
 };
 
 const getOrCreateLocality = async (name: string, municipalityId: number) => {
-  const existingLocalities = await db
-    .select({ id: luxembourgLocalities.id })
-    .from(luxembourgLocalities)
-    .where(
-      and(
-        eq(luxembourgLocalities.name, name),
-        eq(luxembourgLocalities.municipalityId, municipalityId)
+  const existingMunicipalityId = (
+    await db
+      .select({ munId: luxembourgMunicipalities.id })
+      .from(calcrFeature)
+      .innerJoin(
+        luxembourgMunicipalities,
+        eq(luxembourgMunicipalities.calcrId, calcrFeature.lau)
       )
-    );
+      .where(eq(calcrFeature.localite, name))
+      .groupBy(calcrFeature.lau, luxembourgMunicipalities.id)
+      .orderBy(desc(count(calcrFeature.lau)))
+      .limit(1)
+  ).pop()?.munId;
 
-  console.log("existingLocalities: ", existingLocalities);
-  if (existingLocalities.length) return existingLocalities.pop()?.id ?? -1;
+  console.log("existingMunicipalityId: ", existingMunicipalityId);
 
   const newLocalities = await db
     .insert(luxembourgLocalities)
-    .values({ name, municipalityId })
+    .values({ name, municipalityId: existingMunicipalityId ?? municipalityId })
     .onConflictDoUpdate({
       target: [luxembourgLocalities.name, luxembourgLocalities.municipalityId],
-      set: { municipalityId, updatedAt: new Date() },
+      set: { verifiedAt: new Date() },
     })
     .returning({ id: luxembourgLocalities.id });
 
@@ -112,26 +131,52 @@ const getOrCreateLocality = async (name: string, municipalityId: number) => {
   return newLocalities.pop()?.id ?? -1;
 };
 
-const getOrCreatePostalCode = async (code: string, localityId: number) => {
+const getOrCreatePostalCode = async (
+  code: string,
+  localityId: number,
+  municipalityId: number
+) => {
   const existingPostalCodes = await db
-    .select({ id: luxembourgPostalCodes.id })
+    .select()
     .from(luxembourgPostalCodes)
     .where(eq(luxembourgPostalCodes.code, code));
 
   console.log("existingPostalCodes: ", existingPostalCodes);
-  if (existingPostalCodes.length) return existingPostalCodes.pop()?.id ?? -1;
+
+  const newDate = new Date();
+  if (existingPostalCodes.length) {
+    const postalCodeId = existingPostalCodes.pop()?.id ?? -1;
+
+    await db
+      .update(luxembourgPostalCodes)
+      .set({ municipalityId, verifiedAt: newDate })
+      .where(eq(luxembourgPostalCodes.id, postalCodeId));
+
+    await db
+      .insert(localitiesToPostalCodes)
+      .values({ localityId, postalCodeId: postalCodeId })
+      .onConflictDoNothing();
+
+    return postalCodeId;
+  }
 
   const newPostCodes = await db
     .insert(luxembourgPostalCodes)
-    .values({ code, localityId })
+    .values({ code, municipalityId })
     .onConflictDoUpdate({
       target: luxembourgPostalCodes.code,
-      set: { localityId, updatedAt: new Date() },
+      set: { verifiedAt: newDate },
     })
     .returning({ id: luxembourgPostalCodes.id });
 
+  const newPostalCodeId = newPostCodes.pop()?.id ?? -1;
+  await db
+    .insert(localitiesToPostalCodes)
+    .values({ localityId, postalCodeId: newPostalCodeId })
+    .onConflictDoNothing();
+
   console.log("newPostCodes: ", newPostCodes);
-  return newPostCodes.pop()?.id ?? -1;
+  return newPostalCodeId;
 };
 
 const getOrCreateStreet = async (
@@ -139,24 +184,66 @@ const getOrCreateStreet = async (
   calcrId: string,
   localityId: number
 ) => {
+  const existingLocalityId = (
+    await db
+      .select({ locId: luxembourgLocalities.id })
+      .from(calcrFeature)
+      .innerJoin(
+        luxembourgLocalities,
+        eq(luxembourgLocalities.name, calcrFeature.localite)
+      )
+      .where(eq(calcrFeature.idCaclrRue, Number(calcrId)))
+      .groupBy(calcrFeature.localite, luxembourgLocalities.id)
+      .orderBy(desc(count(calcrFeature.localite)))
+      .limit(1)
+  ).pop()?.locId;
+
   const existingStreets = await db
-    .select({ id: luxembourgStreets.id })
+    .select()
     .from(luxembourgStreets)
     .where(eq(luxembourgStreets.calcrId, Number(calcrId)));
 
   console.log("luxembourgStreets: ", existingStreets);
-  if (existingStreets.length) return existingStreets.pop()?.id ?? -1;
+
+  const newDate = new Date();
+  if (existingStreets.length) {
+    const street = existingStreets.pop();
+    const streetId = street?.id ?? -1;
+
+    if (street?.name !== name || street.localityId !== localityId) {
+      await db
+        .update(luxembourgStreets)
+        .set({
+          name,
+          localityId: existingLocalityId ?? localityId,
+          updatedAt: newDate,
+          verifiedAt: newDate,
+        })
+        .where(eq(luxembourgStreets.id, streetId));
+    } else {
+      await db
+        .update(luxembourgStreets)
+        .set({
+          localityId: existingLocalityId ?? localityId,
+          verifiedAt: newDate,
+        })
+        .where(eq(luxembourgStreets.id, streetId));
+    }
+
+    return streetId;
+  }
 
   const newStreets = await db
     .insert(luxembourgStreets)
-    .values({
-      name,
-      calcrId: Number(calcrId),
-      localityId,
-    })
+    .values({ name, calcrId: Number(calcrId), localityId })
     .onConflictDoUpdate({
       target: luxembourgStreets.calcrId,
-      set: { name, localityId, updatedAt: new Date() },
+      set: {
+        name,
+        localityId: existingLocalityId ?? localityId,
+        updatedAt: newDate,
+        verifiedAt: newDate,
+      },
     })
     .returning({ id: luxembourgStreets.id });
 
@@ -174,12 +261,47 @@ const getOrCreateAddressLine = async (
   postalCodeId: number
 ) => {
   const existingAddressLines = await db
-    .select({ id: luxembourgAddressLines.id })
+    .select()
     .from(luxembourgAddressLines)
     .where(eq(luxembourgAddressLines.calcrId, Number(calcrId)));
 
   console.log("existingAddressLines: ", existingAddressLines);
-  if (existingAddressLines.length) return existingAddressLines.pop()?.id ?? -1;
+
+  const newDate = new Date();
+  if (existingAddressLines.length) {
+    const addressLine = existingAddressLines.pop();
+    const addressLineId = addressLine?.id ?? -1;
+
+    if (
+      addressLine?.line !== line ||
+      addressLine.idGeoportal !== idGeoportal ||
+      addressLine.latitude !== latitude ||
+      addressLine.longitude !== longitude ||
+      addressLine.streetId !== streetId ||
+      addressLine.postalCodeId !== postalCodeId
+    ) {
+      await db
+        .update(luxembourgAddressLines)
+        .set({
+          line,
+          idGeoportal,
+          latitude,
+          longitude,
+          streetId,
+          postalCodeId,
+          updatedAt: newDate,
+          verifiedAt: newDate,
+        })
+        .where(eq(luxembourgAddressLines.id, addressLineId));
+    } else {
+      await db
+        .update(luxembourgAddressLines)
+        .set({ verifiedAt: newDate })
+        .where(eq(luxembourgAddressLines.id, addressLineId));
+    }
+
+    return addressLineId;
+  }
 
   const newAddressLines = await db
     .insert(luxembourgAddressLines)
@@ -201,7 +323,8 @@ const getOrCreateAddressLine = async (
         longitude,
         streetId,
         postalCodeId,
-        updatedAt: new Date(),
+        updatedAt: newDate,
+        verifiedAt: newDate,
       },
     })
     .returning({ id: luxembourgAddressLines.id });
@@ -225,19 +348,20 @@ calcrRoute.get("/", async (context) => {
 
     const { geometry, properties } = feature;
 
-    const newCommuneId = await getOrCreateMunicipality(
+    const newMunicipalityId = await getOrCreateMunicipality(
       properties.commune,
       properties.lau2
     );
 
     const newLocalityId = await getOrCreateLocality(
       properties.localite,
-      newCommuneId
+      newMunicipalityId
     );
 
     const newPostCodeId = await getOrCreatePostalCode(
       properties.code_postal,
-      newLocalityId
+      newLocalityId,
+      newMunicipalityId
     );
 
     const newStreetId = await getOrCreateStreet(

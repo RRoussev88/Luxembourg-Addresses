@@ -5,9 +5,9 @@ import { db } from "../database";
 import { luxembourgMunicipalities } from "../schema";
 import { getAllItems, getItemById } from "../utils";
 
-export const communesRoute = new Hono();
+export const municipalitiesRoute = new Hono();
 
-communesRoute.get("/:id", (context) =>
+municipalitiesRoute.get("/:id", (context) =>
   getItemById(context, async (id: number) =>
     (
       await db
@@ -19,7 +19,7 @@ communesRoute.get("/:id", (context) =>
   )
 );
 
-communesRoute.get("/", (context) => {
+municipalitiesRoute.get("/", (context) => {
   const idQuery = context.req
     .queries("id")
     ?.filter((id) => !isNaN(Number(id)))

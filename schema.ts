@@ -2,6 +2,7 @@ import {
   doublePrecision,
   integer,
   pgTable,
+  primaryKey,
   serial,
   timestamp,
   varchar,
@@ -16,6 +17,7 @@ export const luxembourgMunicipalities = pgTable(
     calcrId: integer("calcr_id"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    verifiedAt: timestamp("verified_at").notNull().defaultNow(),
   },
   (munic) => ({
     calcrIndex: uniqueIndex("municipality_calcr_idx").on(munic.calcrId),
@@ -32,9 +34,10 @@ export const luxembourgLocalities = pgTable(
       .references(() => luxembourgMunicipalities.id),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    verifiedAt: timestamp("verified_at").notNull().defaultNow(),
   },
   (locality) => ({
-    nameCommuneIndex: uniqueIndex("locality_name_municipality_idx").on(
+    nameMunicipalityIndex: uniqueIndex("locality_name_municipality_idx").on(
       locality.name,
       locality.municipalityId
     ),
@@ -46,14 +49,33 @@ export const luxembourgPostalCodes = pgTable(
   {
     id: serial("id").primaryKey(),
     code: varchar("code", { length: 10 }),
-    localityId: integer("locality_id")
+    municipalityId: integer("municipality_id")
       .notNull()
-      .references(() => luxembourgLocalities.id),
+      .references(() => luxembourgMunicipalities.id),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    verifiedAt: timestamp("verified_at").notNull().defaultNow(),
   },
   (postCode) => ({
     postCodeIndex: uniqueIndex("post_code_idx").on(postCode.code),
+  })
+);
+
+export const localitiesToPostalCodes = pgTable(
+  "localities_to_postal_codes",
+  {
+    localityId: integer("locality_id")
+      .notNull()
+      .references(() => luxembourgLocalities.id),
+    postalCodeId: integer("postal_code_id")
+      .notNull()
+      .references(() => luxembourgPostalCodes.id),
+  },
+  (record) => ({
+    pk: primaryKey({
+      name: "composite_key",
+      columns: [record.localityId, record.postalCodeId],
+    }),
   })
 );
 
@@ -68,6 +90,7 @@ export const luxembourgStreets = pgTable(
       .references(() => luxembourgLocalities.id),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    verifiedAt: timestamp("verified_at").notNull().defaultNow(),
   },
   (street) => ({
     calcrIndex: uniqueIndex("street_calcr_idx").on(street.calcrId),
@@ -91,6 +114,7 @@ export const luxembourgAddressLines = pgTable(
       .references(() => luxembourgPostalCodes.id),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    verifiedAt: timestamp("verified_at").notNull().defaultNow(),
   },
   (addressLine) => ({
     calcrIndex: uniqueIndex("address_line_calcr_idx").on(addressLine.calcrId),

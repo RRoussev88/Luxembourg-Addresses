@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import {
   addressesRoute,
   calcrRoute,
-  communesRoute,
+  municipalitiesRoute,
   geocodeRoute,
   localitiesRoute,
   postalCodesRoute,
@@ -15,7 +15,7 @@ app.route("/addresses_georeferences", calcrRoute);
 app.route("/addresses", addressesRoute);
 app.route("/geocode", geocodeRoute);
 app.route("/localities", localitiesRoute);
-app.route("/municipalities", communesRoute);
+app.route("/municipalities", municipalitiesRoute);
 app.route("/postal_codes", postalCodesRoute);
 app.route("/streets", streetsRoute);
 

@@ -127,7 +127,17 @@ export const getAllItems = async (
   const offset = getOffset(context);
 
   const totalQuery = db.select({ total: count() }).from(table).$dynamic();
-  const query = db.select().from(table).$dynamic();
+
+  const excludeColumns = ["createdAt", "updatedAt", "verifiedAt"];
+  const tableSelect = Object.keys(table).reduce(
+    (acc, key) =>
+      excludeColumns.includes(key)
+        ? acc
+        : { ...acc, [key]: table[key as keyof typeof table] },
+    {}
+  );
+
+  const query = db.select(tableSelect).from(table).$dynamic();
   if (sql) {
     query.where(sql);
     totalQuery.where(sql);

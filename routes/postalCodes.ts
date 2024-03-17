@@ -18,23 +18,14 @@ postalCodesRoute.get("/:id", (context) =>
         .select({
           id: luxembourgPostalCodes.id,
           code: luxembourgPostalCodes.code,
-          localityId: luxembourgPostalCodes.localityId,
-          locality: {
-            id: luxembourgLocalities.id,
-            name: luxembourgLocalities.name,
-            municipality: {
-              id: luxembourgMunicipalities.id,
-              // @ts-ignore
-              name: luxembourgMunicipalities.name,
-              calcrId: luxembourgMunicipalities.calcrId,
-            },
+          municipalityId: luxembourgPostalCodes.municipalityId,
+          municipality: {
+            id: luxembourgMunicipalities.id,
+            name: luxembourgMunicipalities.name,
+            calcrId: luxembourgMunicipalities.calcrId,
           },
         })
         .from(luxembourgPostalCodes)
-        .innerJoin(
-          luxembourgLocalities,
-          eq(luxembourgPostalCodes.localityId, luxembourgLocalities.id)
-        )
         .innerJoin(
           luxembourgMunicipalities,
           eq(luxembourgLocalities.municipalityId, luxembourgMunicipalities.id)
@@ -50,8 +41,8 @@ postalCodesRoute.get("/", (context) => {
     .queries("id")
     ?.filter((id) => !isNaN(Number(id)))
     .map(Number);
-  const localityIdQuery = context.req
-    .queries("localityId")
+  const municipalityIdQuery = context.req
+    .queries("municipalityId")
     ?.filter((id) => !isNaN(Number(id)))
     .map(Number);
   const codeQuery = context.req.query("code");
@@ -59,8 +50,10 @@ postalCodesRoute.get("/", (context) => {
   const filters: SQLWrapper[] = [];
 
   if (idQuery?.length) filters.push(inArray(luxembourgPostalCodes.id, idQuery));
-  if (localityIdQuery?.length)
-    filters.push(inArray(luxembourgPostalCodes.localityId, localityIdQuery));
+  if (municipalityIdQuery?.length)
+    filters.push(
+      inArray(luxembourgPostalCodes.municipalityId, municipalityIdQuery)
+    );
   if (!!codeQuery) filters.push(ilike(luxembourgPostalCodes.code, codeQuery));
   if (!!codeContainsQuery)
     filters.push(ilike(luxembourgPostalCodes.code, `%${codeContainsQuery}%`));

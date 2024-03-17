@@ -1,5 +1,5 @@
 {
-  "id": "512d883d-be5e-4232-8998-1dc96929b2a1",
+  "id": "e9a35171-ee11-4f62-a13d-c2b39a9047a4",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "5",
   "dialect": "pg",
@@ -93,6 +93,63 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
+    "localities_to_postal_codes": {
+      "name": "localities_to_postal_codes",
+      "schema": "",
+      "columns": {
+        "locality_id": {
+          "name": "locality_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "postal_code_id": {
+          "name": "postal_code_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "localities_to_postal_codes_locality_id_luxembourg_localities_id_fk": {
+          "name": "localities_to_postal_codes_locality_id_luxembourg_localities_id_fk",
+          "tableFrom": "localities_to_postal_codes",
+          "tableTo": "luxembourg_localities",
+          "columnsFrom": [
+            "locality_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "localities_to_postal_codes_postal_code_id_luxembourg_postal_codes_id_fk": {
+          "name": "localities_to_postal_codes_postal_code_id_luxembourg_postal_codes_id_fk",
+          "tableFrom": "localities_to_postal_codes",
+          "tableTo": "luxembourg_postal_codes",
+          "columnsFrom": [
+            "postal_code_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "composite_key": {
+          "name": "composite_key",
+          "columns": [
+            "locality_id",
+            "postal_code_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
     "luxembourg_address_lines": {
       "name": "luxembourg_address_lines",
       "schema": "",
@@ -154,6 +211,13 @@
         },
         "updated_at": {
           "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "verified_at": {
+          "name": "verified_at",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
@@ -235,6 +299,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "verified_at": {
+          "name": "verified_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {
@@ -300,6 +371,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "verified_at": {
+          "name": "verified_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {
@@ -331,8 +409,8 @@
           "primaryKey": false,
           "notNull": false
         },
-        "locality_id": {
-          "name": "locality_id",
+        "municipality_id": {
+          "name": "municipality_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
@@ -350,6 +428,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "verified_at": {
+          "name": "verified_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {
@@ -362,12 +447,12 @@
         }
       },
       "foreignKeys": {
-        "luxembourg_postal_codes_locality_id_luxembourg_localities_id_fk": {
-          "name": "luxembourg_postal_codes_locality_id_luxembourg_localities_id_fk",
+        "luxembourg_postal_codes_municipality_id_luxembourg_municipalities_id_fk": {
+          "name": "luxembourg_postal_codes_municipality_id_luxembourg_municipalities_id_fk",
           "tableFrom": "luxembourg_postal_codes",
-          "tableTo": "luxembourg_localities",
+          "tableTo": "luxembourg_municipalities",
           "columnsFrom": [
-            "locality_id"
+            "municipality_id"
           ],
           "columnsTo": [
             "id"
@@ -416,6 +501,13 @@
         },
         "updated_at": {
           "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "verified_at": {
+          "name": "verified_at",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
