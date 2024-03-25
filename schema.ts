@@ -13,8 +13,8 @@ export const luxembourgMunicipalities = pgTable(
   "luxembourg_municipalities",
   {
     id: serial("id").primaryKey(),
-    name: varchar("name", { length: 50 }),
-    calcrId: integer("calcr_id"),
+    name: varchar("name", { length: 50 }).notNull(),
+    calcrId: integer("calcr_id").notNull().unique(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
     verifiedAt: timestamp("verified_at").notNull().defaultNow(),
@@ -28,7 +28,7 @@ export const luxembourgLocalities = pgTable(
   "luxembourg_localities",
   {
     id: serial("id").primaryKey(),
-    name: varchar("name", { length: 50 }),
+    name: varchar("name", { length: 50 }).notNull(),
     municipalityId: integer("municipality_id")
       .notNull()
       .references(() => luxembourgMunicipalities.id),
@@ -48,7 +48,7 @@ export const luxembourgPostalCodes = pgTable(
   "luxembourg_postal_codes",
   {
     id: serial("id").primaryKey(),
-    code: varchar("code", { length: 10 }),
+    code: varchar("code", { length: 10 }).notNull().unique(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
     verifiedAt: timestamp("verified_at").notNull().defaultNow(),
@@ -80,8 +80,8 @@ export const luxembourgStreets = pgTable(
   "luxembourg_streets",
   {
     id: serial("id").primaryKey(),
-    name: varchar("name", { length: 50 }),
-    calcrId: integer("calcr_id"),
+    name: varchar("name", { length: 50 }).notNull(),
+    calcrId: integer("calcr_id").notNull().unique(),
     localityId: integer("locality_id")
       .notNull()
       .references(() => luxembourgLocalities.id),
@@ -98,11 +98,11 @@ export const luxembourgAddressLines = pgTable(
   "luxembourg_address_lines",
   {
     id: serial("id").primaryKey(),
-    line: varchar("line", { length: 10 }),
-    calcrId: integer("calcr_id"),
-    idGeoportal: varchar("id_geoportal", { length: 50 }),
-    latitude: doublePrecision("latitude"),
-    longitude: doublePrecision("longitude"),
+    line: varchar("line", { length: 10 }).notNull(),
+    calcrId: integer("calcr_id").notNull().unique(),
+    idGeoportal: varchar("id_geoportal", { length: 50 }).notNull(),
+    latitude: doublePrecision("latitude").notNull(),
+    longitude: doublePrecision("longitude").notNull(),
     streetId: integer("street_id")
       .notNull()
       .references(() => luxembourgStreets.id),
