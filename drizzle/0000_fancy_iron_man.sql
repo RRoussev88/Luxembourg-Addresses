@@ -29,6 +29,8 @@ CREATE TABLE IF NOT EXISTS "luxembourg_address_lines" (
 	"longitude" double precision,
 	"street_id" integer NOT NULL,
 	"postal_code_id" integer NOT NULL,
+	"locality_id" integer NOT NULL,
+	"municipality_id" integer NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	"verified_at" timestamp DEFAULT now() NOT NULL
@@ -55,7 +57,6 @@ CREATE TABLE IF NOT EXISTS "luxembourg_municipalities" (
 CREATE TABLE IF NOT EXISTS "luxembourg_postal_codes" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"code" varchar(10),
-	"municipality_id" integer NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	"verified_at" timestamp DEFAULT now() NOT NULL
@@ -101,13 +102,19 @@ EXCEPTION
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "luxembourg_localities" ADD CONSTRAINT "luxembourg_localities_municipality_id_luxembourg_municipalities_id_fk" FOREIGN KEY ("municipality_id") REFERENCES "luxembourg_municipalities"("id") ON DELETE no action ON UPDATE no action;
+ ALTER TABLE "luxembourg_address_lines" ADD CONSTRAINT "luxembourg_address_lines_locality_id_luxembourg_localities_id_fk" FOREIGN KEY ("locality_id") REFERENCES "luxembourg_localities"("id") ON DELETE no action ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "luxembourg_postal_codes" ADD CONSTRAINT "luxembourg_postal_codes_municipality_id_luxembourg_municipalities_id_fk" FOREIGN KEY ("municipality_id") REFERENCES "luxembourg_municipalities"("id") ON DELETE no action ON UPDATE no action;
+ ALTER TABLE "luxembourg_address_lines" ADD CONSTRAINT "luxembourg_address_lines_municipality_id_luxembourg_municipalities_id_fk" FOREIGN KEY ("municipality_id") REFERENCES "luxembourg_municipalities"("id") ON DELETE no action ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+ ALTER TABLE "luxembourg_localities" ADD CONSTRAINT "luxembourg_localities_municipality_id_luxembourg_municipalities_id_fk" FOREIGN KEY ("municipality_id") REFERENCES "luxembourg_municipalities"("id") ON DELETE no action ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;

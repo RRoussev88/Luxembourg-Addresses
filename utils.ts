@@ -153,3 +153,5 @@ export const getAllItems = async (
     items,
   });
 };
+
+export const NO_RSULT_IDS = [-1];

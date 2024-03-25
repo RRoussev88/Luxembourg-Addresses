@@ -1,4 +1,4 @@
-import { and, eq, ilike, inArray, type SQLWrapper } from "drizzle-orm";
+import { and, eq, ilike, inArray, sql, type SQLWrapper } from "drizzle-orm";
 import { Hono } from "hono";
 
 import { db } from "../database";
@@ -7,7 +7,7 @@ import {
   luxembourgLocalities,
   luxembourgStreets,
 } from "../schema";
-import { getAllItems, getItemById } from "../utils";
+import { getAllItems, getItemById, NO_RSULT_IDS } from "../utils";
 
 export const streetsRoute = new Hono();
 
@@ -19,7 +19,6 @@ streetsRoute.get("/:id", (context) =>
           id: luxembourgStreets.id,
           name: luxembourgStreets.name,
           calcrId: luxembourgStreets.calcrId,
-          localityId: luxembourgStreets.localityId,
           locality: {
             id: luxembourgLocalities.id,
             name: luxembourgLocalities.name,
@@ -46,7 +45,7 @@ streetsRoute.get("/:id", (context) =>
   )
 );
 
-streetsRoute.get("/", (context) => {
+streetsRoute.get("/", async (context) => {
   const idQuery = context.req
     .queries("id")
     ?.filter((id) => !isNaN(Number(id)))
@@ -59,18 +58,99 @@ streetsRoute.get("/", (context) => {
     .queries("localityId")
     ?.filter((id) => !isNaN(Number(id)))
     .map(Number);
-  const nameQuery = context.req.query("name");
+  const municipalityIdQuery = context.req
+    .queries("municipalityId")
+    ?.filter((id) => !isNaN(Number(id)))
+    .map(Number);
+  const localityQuery = context.req.queries("locality");
+  const municipalityQuery = context.req.queries("municipality");
+  const nameQuery = context.req.queries("name");
   const nameContainsQuery = context.req.query("nameContains");
   const filters: SQLWrapper[] = [];
 
   if (idQuery?.length) filters.push(inArray(luxembourgStreets.id, idQuery));
-  if (calcrIdQuery?.length)
+  if (calcrIdQuery?.length) {
     filters.push(inArray(luxembourgStreets.calcrId, calcrIdQuery));
-  if (localityIdQuery?.length)
+  }
+  if (localityIdQuery?.length) {
     filters.push(inArray(luxembourgStreets.localityId, localityIdQuery));
-  if (!!nameQuery) filters.push(ilike(luxembourgStreets.name, nameQuery));
-  if (!!nameContainsQuery)
+  }
+  if (!!nameQuery) {
+    filters.push(
+      inArray(
+        sql`UPPER(${luxembourgStreets.name})`,
+        nameQuery.map((name) => name.toUpperCase())
+      )
+    );
+  }
+  if (localityQuery?.length) {
+    const streets = await db
+      .selectDistinct({ id: luxembourgStreets.id })
+      .from(luxembourgStreets)
+      .innerJoin(
+        luxembourgLocalities,
+        eq(luxembourgStreets.localityId, luxembourgLocalities.id)
+      )
+      .where(
+        sql`UPPER(${luxembourgLocalities.name}) IN ${localityQuery.map((loc) => loc.toUpperCase())}`
+      );
+
+    filters.push(
+      inArray(
+        luxembourgStreets.id,
+        streets.length ? streets.map((street) => street.id) : NO_RSULT_IDS
+      )
+    );
+  }
+  if (!!nameContainsQuery) {
     filters.push(ilike(luxembourgStreets.name, `%${nameContainsQuery}%`));
+  }
+  if (municipalityIdQuery?.length) {
+    const streets = await db
+      .selectDistinct({ id: luxembourgStreets.id })
+      .from(luxembourgStreets)
+      .innerJoin(
+        luxembourgLocalities,
+        eq(luxembourgStreets.localityId, luxembourgLocalities.id)
+      )
+      .innerJoin(
+        luxembourgMunicipalities,
+        eq(luxembourgLocalities.municipalityId, luxembourgMunicipalities.id)
+      )
+      .where(inArray(luxembourgMunicipalities.id, municipalityIdQuery));
+
+    filters.push(
+      inArray(
+        luxembourgStreets.id,
+        streets.length
+          ? streets.map((postalCode) => postalCode.id)
+          : NO_RSULT_IDS
+      )
+    );
+  }
+  if (municipalityQuery?.length) {
+    const streets = await db
+      .selectDistinct({ id: luxembourgStreets.id })
+      .from(luxembourgStreets)
+      .innerJoin(
+        luxembourgLocalities,
+        eq(luxembourgStreets.localityId, luxembourgLocalities.id)
+      )
+      .innerJoin(
+        luxembourgMunicipalities,
+        eq(luxembourgLocalities.municipalityId, luxembourgMunicipalities.id)
+      )
+      .where(
+        sql`UPPER(${luxembourgMunicipalities.name}) IN ${municipalityQuery.map((loc) => loc.toUpperCase())}`
+      );
+
+    filters.push(
+      inArray(
+        luxembourgStreets.id,
+        streets.length ? streets.map((street) => street.id) : NO_RSULT_IDS
+      )
+    );
+  }
 
   return getAllItems(context, luxembourgStreets, and(...filters));
 });

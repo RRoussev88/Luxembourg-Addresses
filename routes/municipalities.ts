@@ -1,4 +1,4 @@
-import { and, eq, ilike, inArray, type SQLWrapper } from "drizzle-orm";
+import { and, eq, ilike, inArray, sql, type SQLWrapper } from "drizzle-orm";
 import { Hono } from "hono";
 
 import { db } from "../database";
@@ -28,16 +28,28 @@ municipalitiesRoute.get("/", (context) => {
     .queries("calcrId")
     ?.filter((id) => !isNaN(Number(id)))
     .map(Number);
-  const nameQuery = context.req.query("name");
+  const nameQuery = context.req.queries("name");
   const nameContainsQuery = context.req.query("nameContains");
   const filters: SQLWrapper[] = [];
 
-  if (idQuery?.length) filters.push(inArray(luxembourgMunicipalities.id, idQuery));
-  if (calcrIdQuery?.length)
+  if (idQuery?.length)
+    filters.push(inArray(luxembourgMunicipalities.id, idQuery));
+  if (calcrIdQuery?.length) {
     filters.push(inArray(luxembourgMunicipalities.calcrId, calcrIdQuery));
-  if (!!nameQuery) filters.push(ilike(luxembourgMunicipalities.name, nameQuery));
-  if (!!nameContainsQuery)
-    filters.push(ilike(luxembourgMunicipalities.name, `%${nameContainsQuery}%`));
+  }
+  if (!!nameQuery) {
+    filters.push(
+      inArray(
+        sql`UPPER(${luxembourgMunicipalities.name})`,
+        nameQuery.map((name) => name.toUpperCase())
+      )
+    );
+  }
+  if (!!nameContainsQuery) {
+    filters.push(
+      ilike(luxembourgMunicipalities.name, `%${nameContainsQuery}%`)
+    );
+  }
 
   return getAllItems(context, luxembourgMunicipalities, and(...filters));
 });

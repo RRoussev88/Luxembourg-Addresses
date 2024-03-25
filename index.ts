@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { logger } from "hono/logger";
 
 import {
   addressesRoute,
@@ -11,6 +12,8 @@ import {
 } from "./routes";
 
 const app = new Hono();
+
+app.use(logger());
 app.route("/addresses_georeferences", calcrRoute);
 app.route("/addresses", addressesRoute);
 app.route("/geocode", geocodeRoute);

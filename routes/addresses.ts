@@ -1,4 +1,5 @@
-import { and, eq, ilike, inArray, type SQLWrapper } from "drizzle-orm";
+import { and, eq, ilike, inArray, sql, type SQLWrapper } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { Hono } from "hono";
 
 import { db } from "../database";
@@ -9,9 +10,16 @@ import {
   luxembourgStreets,
   luxembourgAddressLines,
 } from "../schema";
-import { getAllItems, getItemById } from "../utils";
+import { getAllItems, getItemById, NO_RSULT_IDS } from "../utils";
 
 export const addressesRoute = new Hono();
+
+const addressMunicipalities = alias(
+  luxembourgMunicipalities,
+  "addressMunicipalities"
+);
+
+const addressLocalities = alias(luxembourgLocalities, "addressLocalities");
 
 addressesRoute.get("/:id", (context) =>
   getItemById(context, async (id: number) =>
@@ -20,7 +28,6 @@ addressesRoute.get("/:id", (context) =>
         .select({
           id: luxembourgAddressLines.id,
           calcrId: luxembourgAddressLines.calcrId,
-          municipalityId: luxembourgMunicipalities.id,
           idGeoportail: luxembourgAddressLines.idGeoportal,
           line: luxembourgAddressLines.line,
           latitude: luxembourgAddressLines.latitude,
@@ -33,16 +40,27 @@ addressesRoute.get("/:id", (context) =>
             id: luxembourgStreets.id,
             name: luxembourgStreets.name,
             calcrId: luxembourgStreets.calcrId,
+            locality: {
+              id: luxembourgLocalities.id,
+              // @ts-ignore
+              name: luxembourgLocalities.name,
+              municipality: {
+                id: luxembourgMunicipalities.id,
+                // @ts-ignore
+                name: luxembourgMunicipalities.name,
+                calcrId: luxembourgMunicipalities.calcrId,
+              },
+            },
           },
           locality: {
-            id: luxembourgLocalities.id,
-            name: luxembourgLocalities.name,
-            municipality: {
-              id: luxembourgMunicipalities.id,
-              // @ts-ignore
-              name: luxembourgMunicipalities.name,
-              calcrId: luxembourgMunicipalities.calcrId,
-            },
+            id: addressLocalities.id,
+            name: addressLocalities.name,
+            municipalityId: addressLocalities.municipalityId,
+          },
+          municipality: {
+            id: addressMunicipalities.id,
+            name: addressMunicipalities.name,
+            calcrId: addressMunicipalities.calcrId,
           },
         })
         .from(luxembourgAddressLines)
@@ -62,13 +80,21 @@ addressesRoute.get("/:id", (context) =>
           luxembourgMunicipalities,
           eq(luxembourgLocalities.municipalityId, luxembourgMunicipalities.id)
         )
-        .where(eq(luxembourgStreets.id, Number(id)))
+        .innerJoin(
+          addressLocalities,
+          eq(luxembourgAddressLines.localityId, addressLocalities.id)
+        )
+        .innerJoin(
+          addressMunicipalities,
+          eq(luxembourgAddressLines.municipalityId, addressMunicipalities.id)
+        )
+        .where(eq(luxembourgAddressLines.id, Number(id)))
         .limit(1)
     ).pop()
   )
 );
 
-addressesRoute.get("/", (context) => {
+addressesRoute.get("/", async (context) => {
   const idQuery = context.req
     .queries("id")
     ?.filter((id) => !isNaN(Number(id)))
@@ -93,35 +119,94 @@ addressesRoute.get("/", (context) => {
     .queries("longitude")
     ?.filter((lon) => !isNaN(Number(lon)))
     .map(Number);
-  const lineQuery = context.req.query("line");
+  const streetQuery = context.req.queries("street");
+  const postalCodeQuery = context.req.queries("postalCode");
+  const lineQuery = context.req.queries("line");
+  const idGeoportalQuery = context.req.queries("idGeoportal");
   const lineContainsQuery = context.req.query("lineContains");
-  const idGeoportalQuery = context.req.query("idGeoportal");
   const idGeoportalContainsQuery = context.req.query("idGeoportalContains");
   const filters: SQLWrapper[] = [];
 
-  if (idQuery?.length)
+  if (idQuery?.length) {
     filters.push(inArray(luxembourgAddressLines.id, idQuery));
-  if (calcrIdQuery?.length)
+  }
+  if (calcrIdQuery?.length) {
     filters.push(inArray(luxembourgAddressLines.calcrId, calcrIdQuery));
-  if (streetIdQuery?.length)
+  }
+  if (streetIdQuery?.length) {
     filters.push(inArray(luxembourgAddressLines.streetId, streetIdQuery));
-  if (postalCodeIdQuery?.length)
+  }
+  if (streetQuery?.length) {
+    const addresses = await db
+      .selectDistinct({ id: luxembourgAddressLines.id })
+      .from(luxembourgAddressLines)
+      .innerJoin(
+        luxembourgStreets,
+        eq(luxembourgAddressLines.streetId, luxembourgStreets.id)
+      )
+      .where(
+        sql`UPPER(${luxembourgStreets.name}) IN ${streetQuery.map((street) => street.toUpperCase())}`
+      );
+
+    filters.push(
+      inArray(
+        luxembourgAddressLines.id,
+        addresses.length ? addresses.map((addr) => addr.id) : NO_RSULT_IDS
+      )
+    );
+  }
+  if (postalCodeIdQuery?.length) {
     filters.push(
       inArray(luxembourgAddressLines.postalCodeId, postalCodeIdQuery)
     );
-  if (latitudeQuery?.length)
+  }
+  if (postalCodeQuery?.length) {
+    const addresses = await db
+      .selectDistinct({ id: luxembourgAddressLines.id })
+      .from(luxembourgAddressLines)
+      .innerJoin(
+        luxembourgPostalCodes,
+        eq(luxembourgAddressLines.postalCodeId, luxembourgPostalCodes.id)
+      )
+      .where(inArray(luxembourgPostalCodes.code, postalCodeQuery));
+
+    filters.push(
+      inArray(
+        luxembourgAddressLines.id,
+        addresses.length ? addresses.map((addr) => addr.id) : NO_RSULT_IDS
+      )
+    );
+  }
+  if (latitudeQuery?.length) {
     filters.push(inArray(luxembourgAddressLines.latitude, latitudeQuery));
-  if (longitudeQuery?.length)
+  }
+  if (longitudeQuery?.length) {
     filters.push(inArray(luxembourgAddressLines.longitude, longitudeQuery));
-  if (!!lineQuery) filters.push(ilike(luxembourgAddressLines.line, lineQuery));
-  if (!!lineContainsQuery)
+  }
+  if (!!lineQuery) {
+    filters.push(
+      inArray(
+        sql`UPPER(${luxembourgAddressLines.line})`,
+        lineQuery.map((name) => name.toUpperCase())
+      )
+    );
+  }
+  if (!!idGeoportalQuery) {
+    filters.push(
+      inArray(
+        sql`UPPER(${luxembourgAddressLines.idGeoportal})`,
+        idGeoportalQuery.map((name) => name.toUpperCase())
+      )
+    );
+  }
+  if (!!lineContainsQuery) {
     filters.push(ilike(luxembourgAddressLines.line, `%${lineContainsQuery}%`));
-  if (!!idGeoportalQuery)
-    filters.push(ilike(luxembourgAddressLines.idGeoportal, idGeoportalQuery));
-  if (!!idGeoportalContainsQuery)
+  }
+  if (!!idGeoportalContainsQuery) {
     filters.push(
       ilike(luxembourgAddressLines.idGeoportal, `%${idGeoportalContainsQuery}%`)
     );
+  }
 
   return getAllItems(context, luxembourgAddressLines, and(...filters));
 });

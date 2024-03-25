@@ -5,8 +5,8 @@ import {
   primaryKey,
   serial,
   timestamp,
-  varchar,
   uniqueIndex,
+  varchar,
 } from "drizzle-orm/pg-core";
 
 export const luxembourgMunicipalities = pgTable(
@@ -49,9 +49,6 @@ export const luxembourgPostalCodes = pgTable(
   {
     id: serial("id").primaryKey(),
     code: varchar("code", { length: 10 }),
-    municipalityId: integer("municipality_id")
-      .notNull()
-      .references(() => luxembourgMunicipalities.id),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
     verifiedAt: timestamp("verified_at").notNull().defaultNow(),
@@ -112,6 +109,12 @@ export const luxembourgAddressLines = pgTable(
     postalCodeId: integer("postal_code_id")
       .notNull()
       .references(() => luxembourgPostalCodes.id),
+    localityId: integer("locality_id")
+      .notNull()
+      .references(() => luxembourgLocalities.id),
+    municipalityId: integer("municipality_id")
+      .notNull()
+      .references(() => luxembourgMunicipalities.id),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
     verifiedAt: timestamp("verified_at").notNull().defaultNow(),

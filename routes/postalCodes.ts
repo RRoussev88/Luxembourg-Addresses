@@ -1,13 +1,13 @@
-import { and, eq, ilike, inArray, type SQLWrapper } from "drizzle-orm";
+import { and, eq, ilike, inArray, sql, type SQLWrapper } from "drizzle-orm";
 import { Hono } from "hono";
 
 import { db } from "../database";
 import {
-  luxembourgMunicipalities,
+  localitiesToPostalCodes,
   luxembourgLocalities,
   luxembourgPostalCodes,
 } from "../schema";
-import { getAllItems, getItemById } from "../utils";
+import { getAllItems, getItemById, NO_RSULT_IDS } from "../utils";
 
 export const postalCodesRoute = new Hono();
 
@@ -18,45 +18,79 @@ postalCodesRoute.get("/:id", (context) =>
         .select({
           id: luxembourgPostalCodes.id,
           code: luxembourgPostalCodes.code,
-          municipalityId: luxembourgPostalCodes.municipalityId,
-          municipality: {
-            id: luxembourgMunicipalities.id,
-            name: luxembourgMunicipalities.name,
-            calcrId: luxembourgMunicipalities.calcrId,
-          },
         })
         .from(luxembourgPostalCodes)
-        .innerJoin(
-          luxembourgMunicipalities,
-          eq(luxembourgLocalities.municipalityId, luxembourgMunicipalities.id)
-        )
         .where(eq(luxembourgPostalCodes.id, Number(id)))
         .limit(1)
     ).pop()
   )
 );
 
-postalCodesRoute.get("/", (context) => {
+postalCodesRoute.get("/", async (context) => {
   const idQuery = context.req
     .queries("id")
     ?.filter((id) => !isNaN(Number(id)))
     .map(Number);
-  const municipalityIdQuery = context.req
-    .queries("municipalityId")
+  const localityIdQuery = context.req
+    .queries("localityId")
     ?.filter((id) => !isNaN(Number(id)))
     .map(Number);
-  const codeQuery = context.req.query("code");
+  const localityQuery = context.req.queries("locality");
+  const codeQuery = context.req.queries("code");
   const codeContainsQuery = context.req.query("codeContains");
   const filters: SQLWrapper[] = [];
 
   if (idQuery?.length) filters.push(inArray(luxembourgPostalCodes.id, idQuery));
-  if (municipalityIdQuery?.length)
+  if (localityIdQuery?.length) {
+    const postalCodes = await db
+      .selectDistinct({ id: luxembourgPostalCodes.id })
+      .from(localitiesToPostalCodes)
+      .innerJoin(
+        luxembourgPostalCodes,
+        eq(localitiesToPostalCodes.postalCodeId, luxembourgPostalCodes.id)
+      )
+      .where(inArray(localitiesToPostalCodes.localityId, localityIdQuery));
+
     filters.push(
-      inArray(luxembourgPostalCodes.municipalityId, municipalityIdQuery)
+      inArray(
+        luxembourgPostalCodes.id,
+        postalCodes.length
+          ? postalCodes.map((postalCode) => postalCode.id)
+          : NO_RSULT_IDS
+      )
     );
-  if (!!codeQuery) filters.push(ilike(luxembourgPostalCodes.code, codeQuery));
-  if (!!codeContainsQuery)
+  }
+  if (localityQuery?.length) {
+    const postalCodes = await db
+      .selectDistinct({ id: luxembourgPostalCodes.id })
+      .from(localitiesToPostalCodes)
+      .innerJoin(
+        luxembourgPostalCodes,
+        eq(localitiesToPostalCodes.postalCodeId, luxembourgPostalCodes.id)
+      )
+      .innerJoin(
+        luxembourgLocalities,
+        eq(localitiesToPostalCodes.localityId, luxembourgLocalities.id)
+      )
+      .where(
+        sql`UPPER(${luxembourgLocalities.name}) IN ${localityQuery.map((loc) => loc.toUpperCase())}`
+      );
+
+    filters.push(
+      inArray(
+        luxembourgPostalCodes.id,
+        postalCodes.length
+          ? postalCodes.map((postalCode) => postalCode.id)
+          : NO_RSULT_IDS
+      )
+    );
+  }
+  if (!!codeQuery) {
+    filters.push(inArray(luxembourgPostalCodes.code, codeQuery));
+  }
+  if (!!codeContainsQuery) {
     filters.push(ilike(luxembourgPostalCodes.code, `%${codeContainsQuery}%`));
+  }
 
   return getAllItems(context, luxembourgPostalCodes, and(...filters));
 });
