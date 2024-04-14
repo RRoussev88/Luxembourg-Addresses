@@ -111,6 +111,14 @@ addressesRoute.get("/", async (context) => {
     .queries("postalCodeId")
     ?.filter((id) => !isNaN(Number(id)))
     .map(Number);
+  const localityIdQuery = context.req
+    .queries("localityId")
+    ?.filter((id) => !isNaN(Number(id)))
+    .map(Number);
+  const municipalityIdQuery = context.req
+    .queries("municipalityId")
+    ?.filter((id) => !isNaN(Number(id)))
+    .map(Number);
   const latitudeQuery = context.req
     .queries("latitude")
     ?.filter((lat) => !isNaN(Number(lat)))
@@ -121,6 +129,8 @@ addressesRoute.get("/", async (context) => {
     .map(Number);
   const streetQuery = context.req.queries("street");
   const postalCodeQuery = context.req.queries("postalCode");
+  const localityQuery = context.req.queries("locality");
+  const municipalityQuery = context.req.queries("municipality");
   const lineQuery = context.req.queries("line");
   const idGeoportalQuery = context.req.queries("idGeoportal");
   const lineContainsQuery = context.req.query("lineContains");
@@ -175,6 +185,48 @@ addressesRoute.get("/", async (context) => {
         luxembourgAddressLines.id,
         addresses.length ? addresses.map((addr) => addr.id) : NO_RSULT_IDS
       )
+    );
+  }
+  if (localityIdQuery?.length) {
+    filters.push(inArray(luxembourgAddressLines.localityId, localityIdQuery));
+  }
+  if (localityQuery?.length) {
+    const addresses = await db
+      .selectDistinct({ id: luxembourgAddressLines.id })
+      .from(luxembourgAddressLines)
+      .innerJoin(
+        luxembourgLocalities,
+        eq(luxembourgAddressLines.localityId, luxembourgLocalities.id)
+      )
+      .where(inArray(luxembourgLocalities.name, localityQuery));
+
+    filters.push(
+      inArray(
+        luxembourgAddressLines.id,
+        addresses.length ? addresses.map((addr) => addr.id) : NO_RSULT_IDS
+      )
+    );
+  }
+  if (municipalityQuery?.length) {
+    const addresses = await db
+      .selectDistinct({ id: luxembourgAddressLines.id })
+      .from(luxembourgAddressLines)
+      .innerJoin(
+        luxembourgMunicipalities,
+        eq(luxembourgAddressLines.municipalityId, luxembourgMunicipalities.id)
+      )
+      .where(inArray(luxembourgMunicipalities.name, municipalityQuery));
+
+    filters.push(
+      inArray(
+        luxembourgAddressLines.id,
+        addresses.length ? addresses.map((addr) => addr.id) : NO_RSULT_IDS
+      )
+    );
+  }
+  if (municipalityIdQuery?.length) {
+    filters.push(
+      inArray(luxembourgAddressLines.municipalityId, municipalityIdQuery)
     );
   }
   if (latitudeQuery?.length) {

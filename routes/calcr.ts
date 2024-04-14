@@ -11,8 +11,9 @@ import {
   luxembourgMunicipalities,
   luxembourgPostalCodes,
   luxembourgStreets,
+  synchronization,
 } from "../schema";
-import type { Feature } from "../utils";
+import { type Feature, getDateTimeNow } from "../utils";
 
 export const calcrRoute = new Hono();
 
@@ -65,8 +66,7 @@ const getOrCreateMunicipality = async (name: string, calcrId: string) => {
     .from(luxembourgMunicipalities)
     .where(eq(luxembourgMunicipalities.calcrId, Number(calcrId)));
 
-  const newDate = new Date();
-  newDate.setTime(newDate.getTime() + 60 * 60 * 1000);
+  const newDate = getDateTimeNow();
   if (existingMunicipalities.length) {
     const municipality = existingMunicipalities.pop();
     const municipalityId = municipality?.id ?? -1;
@@ -119,7 +119,7 @@ const getOrCreateLocality = async (name: string, municipalityId: number) => {
     .values({ name, municipalityId: existingMunicipalityId ?? municipalityId })
     .onConflictDoUpdate({
       target: [luxembourgLocalities.name, luxembourgLocalities.municipalityId],
-      set: { verifiedAt: new Date() },
+      set: { verifiedAt: getDateTimeNow() },
     })
     .returning({ id: luxembourgLocalities.id });
 
@@ -133,8 +133,7 @@ const getOrCreatePostalCode = async (code: string, localityId: number) => {
     .from(luxembourgPostalCodes)
     .where(eq(luxembourgPostalCodes.code, code));
 
-  const newDate = new Date();
-  newDate.setTime(newDate.getTime() + 60 * 60 * 1000);
+  const newDate = getDateTimeNow();
   if (existingPostalCodes.length) {
     const postalCodeId = existingPostalCodes.pop()?.id ?? -1;
 
@@ -194,8 +193,7 @@ const getOrCreateStreet = async (
     .from(luxembourgStreets)
     .where(eq(luxembourgStreets.calcrId, Number(calcrId)));
 
-  const newDate = new Date();
-  newDate.setTime(newDate.getTime() + 60 * 60 * 1000);
+  const newDate = getDateTimeNow();
   if (existingStreets.length) {
     const street = existingStreets.pop();
     const streetId = street?.id ?? -1;
@@ -275,8 +273,7 @@ const getOrCreateAddressLine = async (
         )
     ).pop()?.id ?? -1;
 
-  const newDate = new Date();
-  newDate.setTime(newDate.getTime() + 60 * 60 * 1000);
+  const newDate = getDateTimeNow();
   if (existingAddressLines.length) {
     const addressLine = existingAddressLines.pop();
     const addressLineId = addressLine?.id ?? -1;
@@ -354,6 +351,7 @@ calcrRoute.get("/", async (context) => {
     throw new HTTPException(404, { message: "URL is not set" });
   }
 
+  const startSyncTime = getDateTimeNow();
   const response = await fetch(url);
   const data: { features: Feature[] } = await response.json();
   console.log("DATA: " + data.features.length);
@@ -396,6 +394,8 @@ calcrRoute.get("/", async (context) => {
       properties.lau2
     );
   }
+
+  await db.insert(synchronization).values({ startedAt: startSyncTime });
 
   return context.json({ total: data.features?.length ?? 0 });
 });

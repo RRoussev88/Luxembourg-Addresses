@@ -140,6 +140,13 @@ export const calcrFeature = pgTable("calcr_feature", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const synchronization = pgTable("synchronizations", {
+  id: serial("id").primaryKey(),
+  startedAt: timestamp("started_at").notNull().defaultNow(),
+  endedAt: timestamp("ended_at").notNull().defaultNow(),
+});
+
+export type Synchronization = typeof synchronization.$inferSelect;
 export type LuxembourgMunicipality =
   typeof luxembourgMunicipalities.$inferSelect;
 export type LuxembourgLocality = typeof luxembourgLocalities.$inferSelect;

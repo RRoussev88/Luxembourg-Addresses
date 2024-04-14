@@ -1,0 +1,632 @@
+{
+  "id": "e5120019-0ebe-4092-9a65-8d407f3d3af0",
+  "prevId": "7a17d1bd-508e-459a-bf5f-3cb1d33050b3",
+  "version": "5",
+  "dialect": "pg",
+  "tables": {
+    "calcr_feature": {
+      "name": "calcr_feature",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "latitude": {
+          "name": "latitude",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "longitude": {
+          "name": "longitude",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rue": {
+          "name": "rue",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "numero": {
+          "name": "numero",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "localite": {
+          "name": "localite",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "code_postal": {
+          "name": "code_postal",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id_caclr_rue": {
+          "name": "id_caclr_rue",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id_caclr_bat": {
+          "name": "id_caclr_bat",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id_geoportail": {
+          "name": "id_geoportail",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "commune": {
+          "name": "commune",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lau": {
+          "name": "lau",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "localities_to_postal_codes": {
+      "name": "localities_to_postal_codes",
+      "schema": "",
+      "columns": {
+        "locality_id": {
+          "name": "locality_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "postal_code_id": {
+          "name": "postal_code_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "localities_to_postal_codes_locality_id_luxembourg_localities_id_fk": {
+          "name": "localities_to_postal_codes_locality_id_luxembourg_localities_id_fk",
+          "tableFrom": "localities_to_postal_codes",
+          "tableTo": "luxembourg_localities",
+          "columnsFrom": [
+            "locality_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "localities_to_postal_codes_postal_code_id_luxembourg_postal_codes_id_fk": {
+          "name": "localities_to_postal_codes_postal_code_id_luxembourg_postal_codes_id_fk",
+          "tableFrom": "localities_to_postal_codes",
+          "tableTo": "luxembourg_postal_codes",
+          "columnsFrom": [
+            "postal_code_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "composite_key": {
+          "name": "composite_key",
+          "columns": [
+            "locality_id",
+            "postal_code_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "luxembourg_address_lines": {
+      "name": "luxembourg_address_lines",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "line": {
+          "name": "line",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "calcr_id": {
+          "name": "calcr_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id_geoportal": {
+          "name": "id_geoportal",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "latitude": {
+          "name": "latitude",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "longitude": {
+          "name": "longitude",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "street_id": {
+          "name": "street_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "postal_code_id": {
+          "name": "postal_code_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "locality_id": {
+          "name": "locality_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "municipality_id": {
+          "name": "municipality_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "verified_at": {
+          "name": "verified_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "address_line_calcr_idx": {
+          "name": "address_line_calcr_idx",
+          "columns": [
+            "calcr_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "luxembourg_address_lines_street_id_luxembourg_streets_id_fk": {
+          "name": "luxembourg_address_lines_street_id_luxembourg_streets_id_fk",
+          "tableFrom": "luxembourg_address_lines",
+          "tableTo": "luxembourg_streets",
+          "columnsFrom": [
+            "street_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "luxembourg_address_lines_postal_code_id_luxembourg_postal_codes_id_fk": {
+          "name": "luxembourg_address_lines_postal_code_id_luxembourg_postal_codes_id_fk",
+          "tableFrom": "luxembourg_address_lines",
+          "tableTo": "luxembourg_postal_codes",
+          "columnsFrom": [
+            "postal_code_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "luxembourg_address_lines_locality_id_luxembourg_localities_id_fk": {
+          "name": "luxembourg_address_lines_locality_id_luxembourg_localities_id_fk",
+          "tableFrom": "luxembourg_address_lines",
+          "tableTo": "luxembourg_localities",
+          "columnsFrom": [
+            "locality_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "luxembourg_address_lines_municipality_id_luxembourg_municipalities_id_fk": {
+          "name": "luxembourg_address_lines_municipality_id_luxembourg_municipalities_id_fk",
+          "tableFrom": "luxembourg_address_lines",
+          "tableTo": "luxembourg_municipalities",
+          "columnsFrom": [
+            "municipality_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "luxembourg_address_lines_calcr_id_unique": {
+          "name": "luxembourg_address_lines_calcr_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "calcr_id"
+          ]
+        }
+      }
+    },
+    "luxembourg_localities": {
+      "name": "luxembourg_localities",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "municipality_id": {
+          "name": "municipality_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "verified_at": {
+          "name": "verified_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "locality_name_municipality_idx": {
+          "name": "locality_name_municipality_idx",
+          "columns": [
+            "name",
+            "municipality_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "luxembourg_localities_municipality_id_luxembourg_municipalities_id_fk": {
+          "name": "luxembourg_localities_municipality_id_luxembourg_municipalities_id_fk",
+          "tableFrom": "luxembourg_localities",
+          "tableTo": "luxembourg_municipalities",
+          "columnsFrom": [
+            "municipality_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "luxembourg_municipalities": {
+      "name": "luxembourg_municipalities",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "calcr_id": {
+          "name": "calcr_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "verified_at": {
+          "name": "verified_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "municipality_calcr_idx": {
+          "name": "municipality_calcr_idx",
+          "columns": [
+            "calcr_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "luxembourg_municipalities_calcr_id_unique": {
+          "name": "luxembourg_municipalities_calcr_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "calcr_id"
+          ]
+        }
+      }
+    },
+    "luxembourg_postal_codes": {
+      "name": "luxembourg_postal_codes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "code": {
+          "name": "code",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "verified_at": {
+          "name": "verified_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "post_code_idx": {
+          "name": "post_code_idx",
+          "columns": [
+            "code"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "luxembourg_postal_codes_code_unique": {
+          "name": "luxembourg_postal_codes_code_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "code"
+          ]
+        }
+      }
+    },
+    "luxembourg_streets": {
+      "name": "luxembourg_streets",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "calcr_id": {
+          "name": "calcr_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "locality_id": {
+          "name": "locality_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "verified_at": {
+          "name": "verified_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "street_calcr_idx": {
+          "name": "street_calcr_idx",
+          "columns": [
+            "calcr_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "luxembourg_streets_locality_id_luxembourg_localities_id_fk": {
+          "name": "luxembourg_streets_locality_id_luxembourg_localities_id_fk",
+          "tableFrom": "luxembourg_streets",
+          "tableTo": "luxembourg_localities",
+          "columnsFrom": [
+            "locality_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "luxembourg_streets_calcr_id_unique": {
+          "name": "luxembourg_streets_calcr_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "calcr_id"
+          ]
+        }
+      }
+    },
+    "synchronizations": {
+      "name": "synchronizations",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "started_at": {
+          "name": "started_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "ended_at": {
+          "name": "ended_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

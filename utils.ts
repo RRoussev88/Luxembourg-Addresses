@@ -175,3 +175,10 @@ export const getAllItems = async (
 };
 
 export const NO_RSULT_IDS = [-1];
+
+export const getDateTimeNow = () => {
+  const newDate = new Date();
+  newDate.setTime(newDate.getTime() - newDate.getTimezoneOffset() * 60_000);
+
+  return newDate;
+};
