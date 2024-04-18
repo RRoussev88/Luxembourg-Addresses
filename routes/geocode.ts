@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 
-import type { GeocodeReverseResponse, GeocodeSearchResponse } from "../utils";
+import type { GeocodeReverseResponse, GeocodeSearchResponse } from "../types";
 import { toNumSafe } from "../utils";
 
 export const geocodeRoute = new Hono();

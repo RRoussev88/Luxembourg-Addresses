@@ -1,4 +1,12 @@
-import { and, eq, ilike, inArray, sql, type SQLWrapper } from "drizzle-orm";
+import {
+  and,
+  eq,
+  gte,
+  ilike,
+  inArray,
+  sql,
+  type SQLWrapper,
+} from "drizzle-orm";
 import { Hono } from "hono";
 
 import { db } from "../database";
@@ -8,9 +16,11 @@ import {
   luxembourgMunicipalities,
   luxembourgPostalCodes,
 } from "../schema";
-import { getAllItems, getItemById, NO_RSULT_IDS } from "../utils";
+import { NO_RSULT_IDS, getAllItems, getItemById } from "../utils";
 
-export const localitiesRoute = new Hono();
+export const localitiesRoute = new Hono<{
+  Variables: { lastSyncTime?: Date };
+}>();
 
 localitiesRoute.get("/:id", (context) =>
   getItemById(context, async (id: number) =>
@@ -30,7 +40,14 @@ localitiesRoute.get("/:id", (context) =>
           luxembourgMunicipalities,
           eq(luxembourgLocalities.municipalityId, luxembourgMunicipalities.id)
         )
-        .where(eq(luxembourgLocalities.id, Number(id)))
+        .where(
+          and(
+            !!context.var.lastSyncTime
+              ? gte(luxembourgLocalities.verifiedAt, context.var.lastSyncTime)
+              : eq(luxembourgLocalities.id, Number(id)),
+            eq(luxembourgLocalities.id, Number(id))
+          )
+        )
         .limit(1)
     ).pop()
   )
@@ -132,6 +149,12 @@ localitiesRoute.get("/", async (context) => {
   }
   if (!!nameContainsQuery) {
     filters.push(ilike(luxembourgLocalities.name, `%${nameContainsQuery}%`));
+  }
+
+  if (!!context.var.lastSyncTime) {
+    filters.push(
+      gte(luxembourgLocalities.verifiedAt, context.var.lastSyncTime)
+    );
   }
 
   return getAllItems(context, luxembourgLocalities, and(...filters));

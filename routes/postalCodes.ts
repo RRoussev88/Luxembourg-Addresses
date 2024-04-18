@@ -1,4 +1,12 @@
-import { and, eq, ilike, inArray, sql, type SQLWrapper } from "drizzle-orm";
+import {
+  and,
+  eq,
+  gte,
+  ilike,
+  inArray,
+  sql,
+  type SQLWrapper,
+} from "drizzle-orm";
 import { Hono } from "hono";
 
 import { db } from "../database";
@@ -7,9 +15,11 @@ import {
   luxembourgLocalities,
   luxembourgPostalCodes,
 } from "../schema";
-import { getAllItems, getItemById, NO_RSULT_IDS } from "../utils";
+import { NO_RSULT_IDS, getAllItems, getItemById } from "../utils";
 
-export const postalCodesRoute = new Hono();
+export const postalCodesRoute = new Hono<{
+  Variables: { lastSyncTime?: Date };
+}>();
 
 postalCodesRoute.get("/:id", (context) =>
   getItemById(context, async (id: number) =>
@@ -20,7 +30,14 @@ postalCodesRoute.get("/:id", (context) =>
           code: luxembourgPostalCodes.code,
         })
         .from(luxembourgPostalCodes)
-        .where(eq(luxembourgPostalCodes.id, Number(id)))
+        .where(
+          and(
+            !!context.var.lastSyncTime
+              ? gte(luxembourgPostalCodes.verifiedAt, context.var.lastSyncTime)
+              : eq(luxembourgPostalCodes.id, Number(id)),
+            eq(luxembourgPostalCodes.id, Number(id))
+          )
+        )
         .limit(1)
     ).pop()
   )
@@ -90,6 +107,12 @@ postalCodesRoute.get("/", async (context) => {
   }
   if (!!codeContainsQuery) {
     filters.push(ilike(luxembourgPostalCodes.code, `%${codeContainsQuery}%`));
+  }
+
+  if (!!context.var.lastSyncTime) {
+    filters.push(
+      gte(luxembourgPostalCodes.verifiedAt, context.var.lastSyncTime)
+    );
   }
 
   return getAllItems(context, luxembourgPostalCodes, and(...filters));

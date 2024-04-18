@@ -1,15 +1,25 @@
-import { and, eq, ilike, inArray, sql, type SQLWrapper } from "drizzle-orm";
+import {
+  and,
+  eq,
+  gte,
+  ilike,
+  inArray,
+  sql,
+  type SQLWrapper,
+} from "drizzle-orm";
 import { Hono } from "hono";
 
 import { db } from "../database";
 import {
-  luxembourgMunicipalities,
   luxembourgLocalities,
+  luxembourgMunicipalities,
   luxembourgStreets,
 } from "../schema";
-import { getAllItems, getItemById, NO_RSULT_IDS } from "../utils";
+import { NO_RSULT_IDS, getAllItems, getItemById } from "../utils";
 
-export const streetsRoute = new Hono();
+export const streetsRoute = new Hono<{
+  Variables: { lastSyncTime?: Date };
+}>();
 
 streetsRoute.get("/:id", (context) =>
   getItemById(context, async (id: number) =>
@@ -39,7 +49,14 @@ streetsRoute.get("/:id", (context) =>
           luxembourgMunicipalities,
           eq(luxembourgLocalities.municipalityId, luxembourgMunicipalities.id)
         )
-        .where(eq(luxembourgStreets.id, Number(id)))
+        .where(
+          and(
+            !!context.var.lastSyncTime
+              ? gte(luxembourgStreets.verifiedAt, context.var.lastSyncTime)
+              : eq(luxembourgStreets.id, Number(id)),
+            eq(luxembourgStreets.id, Number(id))
+          )
+        )
         .limit(1)
     ).pop()
   )
@@ -150,6 +167,10 @@ streetsRoute.get("/", async (context) => {
         streets.length ? streets.map((street) => street.id) : NO_RSULT_IDS
       )
     );
+  }
+
+  if (!!context.var.lastSyncTime) {
+    filters.push(gte(luxembourgStreets.verifiedAt, context.var.lastSyncTime));
   }
 
   return getAllItems(context, luxembourgStreets, and(...filters));

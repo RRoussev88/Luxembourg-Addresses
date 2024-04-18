@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { logger } from "hono/logger";
 
+import { getLastSynchronizationTime } from "./middlewares";
 import {
   addressesRoute,
   calcrRoute,
@@ -15,8 +16,11 @@ const app = new Hono();
 
 app.use(logger());
 app.route("/addresses_georeferences", calcrRoute);
-app.route("/addresses", addressesRoute);
 app.route("/geocode", geocodeRoute);
+
+app.use(getLastSynchronizationTime);
+
+app.route("/addresses", addressesRoute);
 app.route("/localities", localitiesRoute);
 app.route("/municipalities", municipalitiesRoute);
 app.route("/postal_codes", postalCodesRoute);

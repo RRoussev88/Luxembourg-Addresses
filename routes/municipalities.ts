@@ -1,11 +1,21 @@
-import { and, eq, ilike, inArray, sql, type SQLWrapper } from "drizzle-orm";
+import {
+  and,
+  eq,
+  gte,
+  ilike,
+  inArray,
+  sql,
+  type SQLWrapper,
+} from "drizzle-orm";
 import { Hono } from "hono";
 
 import { db } from "../database";
 import { luxembourgMunicipalities } from "../schema";
 import { getAllItems, getItemById } from "../utils";
 
-export const municipalitiesRoute = new Hono();
+export const municipalitiesRoute = new Hono<{
+  Variables: { lastSyncTime?: Date };
+}>();
 
 municipalitiesRoute.get("/:id", (context) =>
   getItemById(context, async (id: number) =>
@@ -13,7 +23,17 @@ municipalitiesRoute.get("/:id", (context) =>
       await db
         .select()
         .from(luxembourgMunicipalities)
-        .where(eq(luxembourgMunicipalities.id, Number(id)))
+        .where(
+          and(
+            !!context.var.lastSyncTime
+              ? gte(
+                  luxembourgMunicipalities.verifiedAt,
+                  context.var.lastSyncTime
+                )
+              : eq(luxembourgMunicipalities.id, Number(id)),
+            eq(luxembourgMunicipalities.id, Number(id))
+          )
+        )
         .limit(1)
     ).pop()
   )
@@ -48,6 +68,12 @@ municipalitiesRoute.get("/", (context) => {
   if (!!nameContainsQuery) {
     filters.push(
       ilike(luxembourgMunicipalities.name, `%${nameContainsQuery}%`)
+    );
+  }
+
+  if (!!context.var.lastSyncTime) {
+    filters.push(
+      gte(luxembourgMunicipalities.verifiedAt, context.var.lastSyncTime)
     );
   }
 

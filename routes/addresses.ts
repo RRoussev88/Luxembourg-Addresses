@@ -1,18 +1,28 @@
-import { and, eq, ilike, inArray, sql, type SQLWrapper } from "drizzle-orm";
+import {
+  and,
+  eq,
+  gte,
+  ilike,
+  inArray,
+  sql,
+  type SQLWrapper,
+} from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { Hono } from "hono";
 
 import { db } from "../database";
 import {
-  luxembourgMunicipalities,
+  luxembourgAddressLines,
   luxembourgLocalities,
+  luxembourgMunicipalities,
   luxembourgPostalCodes,
   luxembourgStreets,
-  luxembourgAddressLines,
 } from "../schema";
-import { getAllItems, getItemById, NO_RSULT_IDS } from "../utils";
+import { NO_RSULT_IDS, getAllItems, getItemById } from "../utils";
 
-export const addressesRoute = new Hono();
+export const addressesRoute = new Hono<{
+  Variables: { lastSyncTime?: Date };
+}>();
 
 const addressMunicipalities = alias(
   luxembourgMunicipalities,
@@ -88,7 +98,14 @@ addressesRoute.get("/:id", (context) =>
           addressMunicipalities,
           eq(luxembourgAddressLines.municipalityId, addressMunicipalities.id)
         )
-        .where(eq(luxembourgAddressLines.id, Number(id)))
+        .where(
+          and(
+            !!context.var.lastSyncTime
+              ? gte(luxembourgAddressLines.verifiedAt, context.var.lastSyncTime)
+              : eq(luxembourgAddressLines.id, Number(id)),
+            eq(luxembourgAddressLines.id, Number(id))
+          )
+        )
         .limit(1)
     ).pop()
   )
@@ -257,6 +274,12 @@ addressesRoute.get("/", async (context) => {
   if (!!idGeoportalContainsQuery) {
     filters.push(
       ilike(luxembourgAddressLines.idGeoportal, `%${idGeoportalContainsQuery}%`)
+    );
+  }
+
+  if (!!context.var.lastSyncTime) {
+    filters.push(
+      gte(luxembourgAddressLines.verifiedAt, context.var.lastSyncTime)
     );
   }
 

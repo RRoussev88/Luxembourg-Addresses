@@ -13,7 +13,8 @@ import {
   luxembourgStreets,
   synchronization,
 } from "../schema";
-import { type Feature, getDateTimeNow } from "../utils";
+import type { Feature } from "../types";
+import { getDateTimeNow } from "../utils";
 
 export const calcrRoute = new Hono();
 
