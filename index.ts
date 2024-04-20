@@ -1,6 +1,9 @@
 import { Hono } from "hono";
 import { logger } from "hono/logger";
 
+import { sql } from "drizzle-orm";
+import { db } from "./database";
+
 import { getLastSynchronizationTime } from "./middlewares";
 import {
   addressesRoute,
@@ -15,6 +18,10 @@ import {
 const app = new Hono();
 
 app.use(logger());
+app.get("/ping", async (context) => {
+  const isHealthy = !!(await db.execute(sql`SELECT 1;`))?.pop();
+  return context.body(isHealthy.toString());
+});
 app.route("/addresses_georeferences", calcrRoute);
 app.route("/geocode", geocodeRoute);
 
