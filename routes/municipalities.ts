@@ -21,7 +21,11 @@ municipalitiesRoute.get("/:id", (context) =>
   getItemById(context, async (id: number) =>
     (
       await db
-        .select()
+        .select({
+          id: luxembourgMunicipalities.id,
+          name: luxembourgMunicipalities.name,
+          calcrId: luxembourgMunicipalities.calcrId,
+        })
         .from(luxembourgMunicipalities)
         .where(
           and(
