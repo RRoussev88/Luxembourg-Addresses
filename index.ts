@@ -17,7 +17,14 @@ import {
 
 const app = new Hono();
 
-app.use(logger());
+app.use(
+  logger((message) =>
+    console.log(
+      message,
+      message.endsWith("ms") ? "" : new Date().toLocaleString()
+    )
+  )
+);
 app.get("/ping", async (context) => {
   const isHealthy = !!(await db.execute(sql`SELECT 1;`))?.pop();
   return context.body(isHealthy.toString());
