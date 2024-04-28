@@ -15,11 +15,10 @@ import {
   luxembourgMunicipalities,
   luxembourgStreets,
 } from "../schema";
+import { type VerifiedRouter } from "../types";
 import { NO_RSULT_IDS, getAllItems, getItemById } from "../utils";
 
-export const streetsRoute = new Hono<{
-  Variables: { lastSyncTime?: Date };
-}>();
+export const streetsRoute = new Hono<VerifiedRouter>();
 
 streetsRoute.get("/:id", (context) =>
   getItemById(context, async (id: number) =>

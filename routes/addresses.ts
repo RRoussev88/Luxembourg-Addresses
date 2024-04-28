@@ -18,11 +18,10 @@ import {
   luxembourgPostalCodes,
   luxembourgStreets,
 } from "../schema";
+import { type VerifiedRouter } from "../types";
 import { NO_RSULT_IDS, getAllItems, getItemById } from "../utils";
 
-export const addressesRoute = new Hono<{
-  Variables: { lastSyncTime?: Date };
-}>();
+export const addressesRoute = new Hono<VerifiedRouter>();
 
 const addressMunicipalities = alias(
   luxembourgMunicipalities,

@@ -77,3 +77,7 @@ export type GeocodeReverseResponse = {
   count: number;
   results: GeocodeReverse[];
 };
+
+export type VerifiedRouter = {
+  Variables: { lastSyncTime?: Date };
+};

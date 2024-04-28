@@ -16,11 +16,10 @@ import {
   luxembourgMunicipalities,
   luxembourgPostalCodes,
 } from "../schema";
+import { type VerifiedRouter } from "../types";
 import { NO_RSULT_IDS, getAllItems, getItemById } from "../utils";
 
-export const localitiesRoute = new Hono<{
-  Variables: { lastSyncTime?: Date };
-}>();
+export const localitiesRoute = new Hono<VerifiedRouter>();
 
 localitiesRoute.get("/:id", (context) =>
   getItemById(context, async (id: number) =>
